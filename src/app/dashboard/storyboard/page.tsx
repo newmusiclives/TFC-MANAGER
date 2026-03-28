@@ -2,7 +2,8 @@
 
 import DashboardSidebar from "@/components/DashboardSidebar";
 import { Bell, Film, Sparkles, Download, RefreshCw, Music2, Palette, Clock, Eye } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { apiGet, apiPost } from "@/lib/api-client";
 
 const storyboards = [
   {
@@ -29,17 +30,42 @@ export default function StoryboardPage() {
   const [selectedTrack, setSelectedTrack] = useState("Midnight Dreams");
   const [generating, setGenerating] = useState(false);
   const [showResult, setShowResult] = useState(true);
+  const [boardList, setBoardList] = useState(storyboards);
+  const [selectedStyle, setSelectedStyle] = useState("Cinematic / Narrative");
 
-  const handleGenerate = () => {
+  useEffect(() => {
+    apiGet<typeof storyboards>("/api/storyboards")
+      .then((d) => { if (d.length > 0) setBoardList(d); })
+      .catch(() => {/* keep mock data */});
+  }, []);
+
+  const handleGenerate = async () => {
     setGenerating(true);
     setShowResult(false);
-    setTimeout(() => {
-      setGenerating(false);
+    try {
+      const result = await apiPost<(typeof storyboards)[0]>("/api/ai/generate", {
+        type: "storyboard",
+        context: { track: selectedTrack, style: selectedStyle },
+      });
+      setBoardList([result, ...boardList]);
       setShowResult(true);
-    }, 2500);
+    } catch {
+      // Fall back to showing existing mock
+      setShowResult(true);
+    } finally {
+      setGenerating(false);
+    }
   };
 
-  const board = storyboards[0];
+  const saveStoryboard = async (storyboardData: (typeof storyboards)[0]) => {
+    try {
+      await apiPost("/api/storyboards", storyboardData);
+    } catch {
+      /* keep current state */
+    }
+  };
+
+  const board = boardList[0];
 
   return (
     <div className="flex min-h-screen bg-gray-50">
@@ -65,7 +91,7 @@ export default function StoryboardPage() {
               </div>
               <div className="flex-1">
                 <label className="block text-sm font-medium mb-1.5">Video Style</label>
-                <select className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20">
+                <select value={selectedStyle} onChange={(e) => setSelectedStyle(e.target.value)} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20">
                   <option>Cinematic / Narrative</option>
                   <option>Performance / Live</option>
                   <option>Abstract / Artistic</option>

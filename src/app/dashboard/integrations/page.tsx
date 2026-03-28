@@ -1,7 +1,8 @@
 "use client";
 
 import DashboardSidebar from "@/components/DashboardSidebar";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { apiGet, apiPost } from "@/lib/api-client";
 import Link from "next/link";
 import {
   Plug,
@@ -50,6 +51,43 @@ export default function IntegrationsPage() {
     { name: "playlist_add", description: "When your track is added to a playlist", enabled: true },
   ]);
   const [copiedKey, setCopiedKey] = useState(false);
+  const [connectedPlatforms, setConnectedPlatforms] = useState<Record<string, boolean>>({});
+  const [connectEmail, setConnectEmail] = useState("");
+
+  useEffect(() => {
+    apiGet<{ connectedPlatforms?: Record<string, boolean> }>("/api/users/me")
+      .then((d) => {
+        if (d.connectedPlatforms) setConnectedPlatforms(d.connectedPlatforms);
+      })
+      .catch(() => {/* keep mock data */});
+  }, []);
+
+  const handleConnectPlatform = (platform: string) => {
+    // Redirect to OAuth flows
+    const authUrls: Record<string, string> = {
+      "Spotify for Artists": "/api/auth/spotify",
+      "YouTube": "/api/auth/youtube",
+      "TikTok": "/api/auth/tiktok",
+    };
+    const url = authUrls[platform];
+    if (url) window.location.href = url;
+  };
+
+  const handleGHLSync = async () => {
+    try {
+      await apiPost("/api/ghl/sync", {});
+    } catch {
+      /* sync failed silently */
+    }
+  };
+
+  const handleTrueFansConnect = async () => {
+    try {
+      await apiPost("/api/truefans-connect/link", { connectEmail });
+    } catch {
+      /* link failed silently */
+    }
+  };
 
   const handleCopyKey = () => {
     navigator.clipboard.writeText("tfm_live_sk_example_key_a3f2");
@@ -67,7 +105,7 @@ export default function IntegrationsPage() {
     {
       name: "Spotify for Artists",
       icon: Music2,
-      connected: true,
+      connected: connectedPlatforms["spotify"] ?? true,
       description: "Last synced 2 hours ago",
       color: "text-green-400",
       bgColor: "bg-green-500/10",
@@ -75,7 +113,7 @@ export default function IntegrationsPage() {
     {
       name: "Apple Music for Artists",
       icon: Headphones,
-      connected: true,
+      connected: connectedPlatforms["apple_music"] ?? true,
       description: "Stream analytics and playlist data",
       color: "text-pink-400",
       bgColor: "bg-pink-500/10",
@@ -83,16 +121,16 @@ export default function IntegrationsPage() {
     {
       name: "TrueFans CONNECT",
       icon: Link2,
-      connected: false,
+      connected: connectedPlatforms["truefans_connect"] ?? false,
       description: "Link your account to get Pro free",
       color: "text-purple-400",
       bgColor: "bg-purple-500/10",
-      connectUrl: "https://truefansconnect.com",
+      connectUrl: "truefans-connect",
     },
     {
       name: "DistroKid",
       icon: Package,
-      connected: true,
+      connected: connectedPlatforms["distrokid"] ?? true,
       description: "Distribution and release management",
       color: "text-blue-400",
       bgColor: "bg-blue-500/10",
@@ -100,7 +138,7 @@ export default function IntegrationsPage() {
     {
       name: "YouTube",
       icon: Video,
-      connected: false,
+      connected: connectedPlatforms["youtube"] ?? false,
       description: "Video analytics and channel data",
       color: "text-red-400",
       bgColor: "bg-red-500/10",
@@ -108,7 +146,7 @@ export default function IntegrationsPage() {
     {
       name: "TikTok",
       icon: Smartphone,
-      connected: false,
+      connected: connectedPlatforms["tiktok"] ?? false,
       description: "Short-form video performance",
       color: "text-cyan-400",
       bgColor: "bg-cyan-500/10",
@@ -193,18 +231,28 @@ export default function IntegrationsPage() {
                   <button className="w-full px-4 py-2 text-sm font-medium text-red-400 bg-red-500/10 hover:bg-red-500/20 rounded-lg transition-colors">
                     Disconnect
                   </button>
-                ) : service.connectUrl ? (
-                  <Link
-                    href={service.connectUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center justify-center gap-2 w-full px-4 py-2 text-sm font-medium text-purple-400 bg-purple-500/10 hover:bg-purple-500/20 rounded-lg transition-colors"
-                  >
-                    Connect
-                    <ExternalLink className="w-3.5 h-3.5" />
-                  </Link>
+                ) : service.connectUrl === "truefans-connect" ? (
+                  <div className="space-y-2">
+                    <input
+                      type="email"
+                      placeholder="Your TrueFans CONNECT email"
+                      value={connectEmail}
+                      onChange={(e) => setConnectEmail(e.target.value)}
+                      className="w-full px-3 py-1.5 text-sm bg-zinc-800 border border-zinc-700 rounded-lg text-zinc-300 placeholder:text-zinc-600 outline-none"
+                    />
+                    <button
+                      onClick={handleTrueFansConnect}
+                      className="flex items-center justify-center gap-2 w-full px-4 py-2 text-sm font-medium text-purple-400 bg-purple-500/10 hover:bg-purple-500/20 rounded-lg transition-colors"
+                    >
+                      Link Account
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 ) : (
-                  <button className="w-full px-4 py-2 text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors">
+                  <button
+                    onClick={() => handleConnectPlatform(service.name)}
+                    className="w-full px-4 py-2 text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors"
+                  >
                     Connect
                   </button>
                 )}

@@ -17,7 +17,8 @@ import {
   Download,
   Play,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { apiGet, apiPost } from "@/lib/api-client";
 
 const listeningLinks = [
   {
@@ -76,6 +77,23 @@ export default function ListeningLinksPage() {
   const [showCreate, setShowCreate] = useState(false);
   const [copied, setCopied] = useState<string | null>(null);
   const [expandedLink, setExpandedLink] = useState<string | null>("ll1");
+  const [links, setLinks] = useState(listeningLinks);
+
+  useEffect(() => {
+    apiGet<typeof listeningLinks>("/api/listening-links")
+      .then((d) => setLinks(d))
+      .catch(() => {/* keep mock data */});
+  }, []);
+
+  const createLink = async (linkData: { title: string; password: string; expiresAt: string; maxPlays: number }) => {
+    try {
+      const newLink = await apiPost<(typeof listeningLinks)[0]>("/api/listening-links", linkData);
+      setLinks((prev) => [...prev, newLink]);
+      setShowCreate(false);
+    } catch {
+      /* keep current state */
+    }
+  };
 
   const handleCopy = (text: string, id: string) => {
     navigator.clipboard.writeText(text);
@@ -164,34 +182,34 @@ export default function ListeningLinksPage() {
                 <div className="w-9 h-9 bg-blue-50 rounded-lg flex items-center justify-center"><Lock size={18} className="text-blue-600" /></div>
                 <span className="text-sm text-gray-500">Total Links</span>
               </div>
-              <div className="text-2xl font-bold">{listeningLinks.length}</div>
+              <div className="text-2xl font-bold">{links.length}</div>
             </div>
             <div className="bg-white rounded-xl p-5 border border-gray-100">
               <div className="flex items-center gap-3 mb-2">
                 <div className="w-9 h-9 bg-green-50 rounded-lg flex items-center justify-center"><CheckCircle2 size={18} className="text-green-600" /></div>
                 <span className="text-sm text-gray-500">Active</span>
               </div>
-              <div className="text-2xl font-bold">{listeningLinks.filter((l) => l.status === "active").length}</div>
+              <div className="text-2xl font-bold">{links.filter((l) => l.status === "active").length}</div>
             </div>
             <div className="bg-white rounded-xl p-5 border border-gray-100">
               <div className="flex items-center gap-3 mb-2">
                 <div className="w-9 h-9 bg-purple-50 rounded-lg flex items-center justify-center"><Play size={18} className="text-purple-600" /></div>
                 <span className="text-sm text-gray-500">Total Plays</span>
               </div>
-              <div className="text-2xl font-bold">{listeningLinks.reduce((a, l) => a + l.plays, 0)}</div>
+              <div className="text-2xl font-bold">{links.reduce((a, l) => a + l.plays, 0)}</div>
             </div>
             <div className="bg-white rounded-xl p-5 border border-gray-100">
               <div className="flex items-center gap-3 mb-2">
                 <div className="w-9 h-9 bg-orange-50 rounded-lg flex items-center justify-center"><Eye size={18} className="text-orange-600" /></div>
                 <span className="text-sm text-gray-500">Total Visitors</span>
               </div>
-              <div className="text-2xl font-bold">{listeningLinks.reduce((a, l) => a + l.visitors, 0)}</div>
+              <div className="text-2xl font-bold">{links.reduce((a, l) => a + l.visitors, 0)}</div>
             </div>
           </div>
 
           {/* Links */}
           <div className="space-y-4">
-            {listeningLinks.map((link) => (
+            {links.map((link) => (
               <div key={link.id} className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
                 <div
                   className="p-6 cursor-pointer hover:bg-gray-50/50 transition-colors"

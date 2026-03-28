@@ -24,7 +24,8 @@ import {
   TrendingUp,
   Map,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { apiGet, apiPost } from "@/lib/api-client";
 
 type Show = {
   id: string;
@@ -189,6 +190,26 @@ const mapLocations = [
 export default function GigsPage() {
   const [expandedShow, setExpandedShow] = useState<string | null>(null);
   const [showAISuggestion, setShowAISuggestion] = useState(false);
+  const [shows, setShows] = useState<Show[]>(upcomingShows);
+  const [past, setPast] = useState(pastShows);
+
+  useEffect(() => {
+    apiGet<{ upcoming: Show[]; past: typeof pastShows }>("/api/gigs")
+      .then((d) => {
+        if (d.upcoming) setShows(d.upcoming);
+        if (d.past) setPast(d.past);
+      })
+      .catch(() => {/* keep mock data */});
+  }, []);
+
+  const addShow = async (gigData: Partial<Show>) => {
+    try {
+      const newShow = await apiPost<Show>("/api/gigs", gigData);
+      setShows((prev) => [...prev, newShow]);
+    } catch {
+      /* keep current state */
+    }
+  };
 
   const toggleShow = (id: string) => {
     setExpandedShow(expandedShow === id ? null : id);
@@ -269,7 +290,7 @@ export default function GigsPage() {
           {/* Upcoming Shows */}
           <h2 className="text-lg font-semibold mb-4">Upcoming Shows</h2>
           <div className="space-y-4 mb-8">
-            {upcomingShows.map((show) => {
+            {shows.map((show) => {
               const pct = pctSold(show.ticketsSold, show.capacity);
               const isExpanded = expandedShow === show.id;
               return (
@@ -484,7 +505,7 @@ export default function GigsPage() {
                 </tr>
               </thead>
               <tbody>
-                {pastShows.map((show, idx) => (
+                {past.map((show, idx) => (
                   <tr
                     key={idx}
                     className="border-b border-gray-50 hover:bg-gray-50 transition-colors"

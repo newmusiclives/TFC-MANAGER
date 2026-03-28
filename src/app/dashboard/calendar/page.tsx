@@ -11,7 +11,8 @@ import {
   Megaphone,
   CalendarDays,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { apiGet } from "@/lib/api-client";
 
 type CalendarEvent = {
   id: number;
@@ -133,6 +134,14 @@ export default function CalendarPage() {
   const [currentMonth, setCurrentMonth] = useState(today.getMonth());
   const [currentYear, setCurrentYear] = useState(today.getFullYear());
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [events, setEvents] = useState<CalendarEvent[]>(mockEvents);
+
+  useEffect(() => {
+    const monthStr = `${currentYear}-${String(currentMonth + 1).padStart(2, "0")}`;
+    apiGet<CalendarEvent[]>(`/api/calendar?month=${monthStr}`)
+      .then((d) => setEvents(d))
+      .catch(() => {/* keep mock data */});
+  }, [currentMonth, currentYear]);
 
   const daysInMonth = getDaysInMonth(currentYear, currentMonth);
   const firstDay = getFirstDayOfMonth(currentYear, currentMonth);
@@ -164,7 +173,7 @@ export default function CalendarPage() {
   };
 
   const getEventsForDate = (dateStr: string) =>
-    mockEvents.filter((e) => e.date === dateStr);
+    events.filter((e) => e.date === dateStr);
 
   const selectedEvents = selectedDate ? getEventsForDate(selectedDate) : [];
 
@@ -378,7 +387,7 @@ export default function CalendarPage() {
                     Upcoming
                   </h4>
                   <div className="space-y-2">
-                    {mockEvents
+                    {events
                       .filter((e) => e.date >= todayKey)
                       .sort((a, b) => a.date.localeCompare(b.date))
                       .slice(0, 4)

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { ArrowRight, Eye, EyeOff, AlertCircle, Shield } from "lucide-react";
+import { apiPost } from "@/lib/api-client";
 
 export default function SignIn() {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -10,34 +11,69 @@ export default function SignIn() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [artistName, setArtistName] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setLoading(true);
 
-    // Demo login check
-    if (
-      email === "demo@truefansmanager.com" &&
-      password === "demo123"
-    ) {
-      window.location.href = "/dashboard";
-      return;
+    try {
+      if (isSignUp) {
+        // Sign up flow
+        const res = await apiPost<{ token?: string }>("/api/users/register", {
+          email,
+          password,
+          name: artistName,
+        });
+        if (res.token) {
+          document.cookie = `token=${res.token}; path=/; max-age=${60 * 60 * 24 * 7}`;
+        }
+        window.location.href = "/onboarding";
+        return;
+      } else {
+        // Sign in flow
+        const res = await apiPost<{ token?: string }>("/api/users/login", {
+          email,
+          password,
+        });
+        if (res.token) {
+          document.cookie = `token=${res.token}; path=/; max-age=${60 * 60 * 24 * 7}`;
+        }
+        window.location.href = "/dashboard";
+        return;
+      }
+    } catch (err: unknown) {
+      // API failed - fall back to demo behavior so site works without a database
+      const apiErr = err as { status?: number; message?: string };
+      if (apiErr.status === 401 || apiErr.status === 403 || apiErr.status === 400) {
+        // Real auth error from a working API - show the message
+        setError(apiErr.message || "Invalid credentials.");
+        setLoading(false);
+        return;
+      }
+
+      // API not available (network error, DB down, etc.) - fall back to hardcoded demo behavior
+      if (
+        email === "demo@truefansmanager.com" &&
+        password === "demo123"
+      ) {
+        window.location.href = "/dashboard";
+        return;
+      }
+      if (isSignUp) {
+        window.location.href = "/onboarding";
+        return;
+      }
+      if (email && password) {
+        window.location.href = "/dashboard";
+        return;
+      }
+      setError("Please enter your email and password.");
+    } finally {
+      setLoading(false);
     }
-
-    // Accept any non-empty credentials for signup
-    if (isSignUp) {
-      window.location.href = "/onboarding";
-      return;
-    }
-
-    // For sign-in, check demo creds
-    if (email && password) {
-      // Accept any credentials for demo purposes
-      window.location.href = "/dashboard";
-      return;
-    }
-
-    setError("Please enter your email and password.");
   };
 
   const fillDemo = () => {
@@ -140,6 +176,8 @@ export default function SignIn() {
                 </label>
                 <input
                   type="text"
+                  value={artistName}
+                  onChange={(e) => setArtistName(e.target.value)}
                   placeholder="Your artist name"
                   className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20 focus:border-[var(--primary)] transition-colors"
                 />
@@ -194,10 +232,11 @@ export default function SignIn() {
 
             <button
               type="submit"
-              className="w-full flex items-center justify-center gap-2 bg-[var(--primary)] hover:bg-[var(--primary-dark)] text-white font-semibold py-3.5 rounded-xl text-lg transition-colors"
+              disabled={loading}
+              className="w-full flex items-center justify-center gap-2 bg-[var(--primary)] hover:bg-[var(--primary-dark)] text-white font-semibold py-3.5 rounded-xl text-lg transition-colors disabled:opacity-60"
             >
-              {isSignUp ? "Sign up" : "Sign in"}
-              <ArrowRight size={20} />
+              {loading ? "Please wait..." : isSignUp ? "Sign up" : "Sign in"}
+              {!loading && <ArrowRight size={20} />}
             </button>
           </form>
 

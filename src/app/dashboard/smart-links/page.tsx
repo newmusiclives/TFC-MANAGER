@@ -17,9 +17,10 @@ import {
   Trash2,
   Edit3,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
+import { apiGet, apiPost } from "@/lib/api-client";
 
-const smartLinks = [
+const mockSmartLinks = [
   {
     id: "sl1",
     title: "Midnight Dreams",
@@ -79,6 +80,48 @@ const smartLinks = [
 export default function SmartLinksPage() {
   const [showCreate, setShowCreate] = useState(false);
   const [copied, setCopied] = useState<string | null>(null);
+  const [smartLinks, setSmartLinks] = useState(mockSmartLinks);
+  const [creating, setCreating] = useState(false);
+  const titleRef = useRef<HTMLInputElement>(null);
+  const slugRef = useRef<HTMLInputElement>(null);
+  const platformRefs = useRef<Record<string, HTMLInputElement | null>>({});
+
+  const fetchLinks = async () => {
+    try {
+      const data = await apiGet<typeof mockSmartLinks>("/api/smart-links");
+      if (Array.isArray(data) && data.length > 0) {
+        setSmartLinks(data);
+      }
+    } catch {
+      // API unavailable — keep mock data
+    }
+  };
+
+  useEffect(() => {
+    fetchLinks();
+  }, []);
+
+  const handleCreateLink = async () => {
+    const title = titleRef.current?.value?.trim();
+    const slug = slugRef.current?.value?.trim();
+    if (!title || !slug) return;
+
+    const platformNames = ["Spotify", "Apple Music", "YouTube Music", "Deezer", "Tidal", "SoundCloud", "Amazon Music", "Bandcamp"];
+    const platformLinks = platformNames
+      .map((name) => ({ name, url: platformRefs.current[name]?.value?.trim() || "" }))
+      .filter((p) => p.url);
+
+    setCreating(true);
+    try {
+      await apiPost("/api/smart-links", { title, slug, platformLinks });
+      await fetchLinks();
+      setShowCreate(false);
+    } catch {
+      // API unavailable — close form silently
+    } finally {
+      setCreating(false);
+    }
+  };
 
   const handleCopy = (url: string, id: string) => {
     navigator.clipboard.writeText(url);
@@ -121,6 +164,7 @@ export default function SmartLinksPage() {
                     Release Title
                   </label>
                   <input
+                    ref={titleRef}
                     type="text"
                     placeholder="e.g. Golden Hour"
                     className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20 focus:border-[var(--primary)]"
@@ -135,6 +179,7 @@ export default function SmartLinksPage() {
                       tfm.link/
                     </span>
                     <input
+                      ref={slugRef}
                       type="text"
                       placeholder="golden-hour"
                       className="flex-1 px-4 py-2.5 border border-gray-200 rounded-r-xl text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20 focus:border-[var(--primary)]"
@@ -161,6 +206,7 @@ export default function SmartLinksPage() {
                       {p}
                     </label>
                     <input
+                      ref={(el) => { platformRefs.current[p] = el; }}
                       type="url"
                       placeholder={`Paste ${p} link...`}
                       className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20 focus:border-[var(--primary)]"
@@ -169,8 +215,12 @@ export default function SmartLinksPage() {
                 ))}
               </div>
               <div className="flex gap-3">
-                <button className="bg-[var(--primary)] hover:bg-[var(--primary-dark)] text-white font-medium text-sm px-5 py-2.5 rounded-lg transition-colors">
-                  Create Link
+                <button
+                  onClick={handleCreateLink}
+                  disabled={creating}
+                  className="bg-[var(--primary)] hover:bg-[var(--primary-dark)] text-white font-medium text-sm px-5 py-2.5 rounded-lg transition-colors disabled:opacity-50"
+                >
+                  {creating ? "Creating..." : "Create Link"}
                 </button>
                 <button
                   onClick={() => setShowCreate(false)}

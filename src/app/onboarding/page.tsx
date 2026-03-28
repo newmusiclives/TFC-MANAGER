@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { apiPatch } from "@/lib/api-client";
 import {
   Music2,
   ChevronRight,
@@ -69,6 +70,30 @@ export default function OnboardingPage() {
   const [listenerTarget, setListenerTarget] = useState("10000");
   const [releaseFreq, setReleaseFreq] = useState("");
   const [selectedGoals, setSelectedGoals] = useState<string[]>([]);
+  const [launching, setLaunching] = useState(false);
+
+  const handleLaunchDashboard = async () => {
+    setLaunching(true);
+    try {
+      await apiPatch("/api/users/me", {
+        artistName,
+        genre: selectedGenres,
+        bio: "",
+        location: "",
+        onboarding: {
+          connectedPlatforms,
+          trackName,
+          releaseDate,
+          listenerTarget,
+          releaseFreq,
+          selectedGoals,
+        },
+      });
+    } catch {
+      // API not available - fall back to redirect so demo still works
+    }
+    window.location.href = "/dashboard";
+  };
 
   function toggleGenre(g: string) {
     setSelectedGenres((prev) =>
@@ -493,13 +518,14 @@ export default function OnboardingPage() {
                 <ChevronRight size={16} />
               </button>
             ) : (
-              <a
-                href="/dashboard"
-                className="flex items-center gap-2 px-6 py-2.5 text-sm font-semibold rounded-xl bg-[var(--primary)] text-white hover:opacity-90 transition-all"
+              <button
+                onClick={handleLaunchDashboard}
+                disabled={launching}
+                className="flex items-center gap-2 px-6 py-2.5 text-sm font-semibold rounded-xl bg-[var(--primary)] text-white hover:opacity-90 transition-all disabled:opacity-60"
               >
                 <Rocket size={16} />
-                Launch Dashboard
-              </a>
+                {launching ? "Saving..." : "Launch Dashboard"}
+              </button>
             )}
           </div>
         </div>

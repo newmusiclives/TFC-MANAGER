@@ -18,7 +18,8 @@ import {
   Download,
   Trash2,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { apiGet, apiPost } from "@/lib/api-client";
 
 type RiskLevel = "low" | "medium" | "high";
 
@@ -127,6 +128,13 @@ export default function ContractsPage() {
   const [expandedClause, setExpandedClause] = useState<string | null>(null);
   const [showUpload, setShowUpload] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
+  const [contracts, setContracts] = useState<Contract[]>(analyzedContracts);
+
+  useEffect(() => {
+    apiGet<Contract[]>("/api/contracts")
+      .then((d) => setContracts(d))
+      .catch(() => {/* keep mock data */});
+  }, []);
 
   const riskColor = (r: RiskLevel) => {
     switch (r) {
@@ -144,10 +152,36 @@ export default function ContractsPage() {
     }
   };
 
-  const handleUpload = () => {
+  const handleUpload = async () => {
     setShowUpload(false);
     setAnalyzing(true);
-    setTimeout(() => setAnalyzing(false), 3000);
+    try {
+      // In a real flow, you would first upload the file, then create the contract, then trigger analysis
+      // const { url: fileUrl } = await apiUpload("/api/uploads", formData);
+      const newContract = await apiPost<Contract>("/api/contracts", {
+        fileName: "Uploaded_Contract.pdf",
+        fileUrl: "",
+        pages: 0,
+      });
+      // Trigger AI analysis
+      const analysis = await apiPost<{ clauses: ContractClause[]; overallRisk: RiskLevel }>("/api/ai/generate", {
+        type: "contract",
+        context: { text: "extracted text from contract" },
+      });
+      if (analysis && newContract) {
+        const analyzed: Contract = {
+          ...newContract,
+          status: "analyzed",
+          clauses: analysis.clauses || [],
+          overallRisk: analysis.overallRisk || "medium",
+        };
+        setContracts((prev) => [analyzed, ...prev]);
+      }
+    } catch {
+      /* keep mock data */
+    } finally {
+      setAnalyzing(false);
+    }
   };
 
   return (
@@ -202,7 +236,7 @@ export default function ContractsPage() {
 
           {/* Contracts list */}
           <div className="space-y-4">
-            {analyzedContracts.map((contract) => (
+            {contracts.map((contract) => (
               <div key={contract.id} className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
                 <div
                   className="p-6 cursor-pointer hover:bg-gray-50/50 transition-colors"

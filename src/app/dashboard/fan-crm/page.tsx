@@ -19,17 +19,27 @@ import {
   CheckCircle2,
   XCircle,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { apiGet, apiPost } from "@/lib/api-client";
 
 type Segment = "all" | "superfans" | "new" | "inactive";
 
-const subscribers = [
+type Subscriber = {
+  name: string;
+  email: string;
+  source: string;
+  joined: string;
+  status: "active" | "unsubscribed";
+  engagement: number;
+};
+
+const mockSubscribers: Subscriber[] = [
   {
     name: "Alex Morrison",
     email: "alex.morrison@email.com",
     source: "website",
     joined: "Mar 12, 2026",
-    status: "active" as const,
+    status: "active",
     engagement: 94,
   },
   {
@@ -37,7 +47,7 @@ const subscribers = [
     email: "marie.l@email.com",
     source: "smart-link",
     joined: "Mar 8, 2026",
-    status: "active" as const,
+    status: "active",
     engagement: 91,
   },
   {
@@ -45,7 +55,7 @@ const subscribers = [
     email: "jamesk@email.com",
     source: "campaign",
     joined: "Feb 28, 2026",
-    status: "active" as const,
+    status: "active",
     engagement: 87,
   },
   {
@@ -53,7 +63,7 @@ const subscribers = [
     email: "sarah.t@email.com",
     source: "website",
     joined: "Feb 20, 2026",
-    status: "active" as const,
+    status: "active",
     engagement: 82,
   },
   {
@@ -61,7 +71,7 @@ const subscribers = [
     email: "lukas.b@email.com",
     source: "smart-link",
     joined: "Feb 14, 2026",
-    status: "active" as const,
+    status: "active",
     engagement: 76,
   },
   {
@@ -69,7 +79,7 @@ const subscribers = [
     email: "emma.r@email.com",
     source: "campaign",
     joined: "Jan 30, 2026",
-    status: "unsubscribed" as const,
+    status: "unsubscribed",
     engagement: 23,
   },
   {
@@ -77,7 +87,7 @@ const subscribers = [
     email: "yuki.sato@email.com",
     source: "website",
     joined: "Jan 18, 2026",
-    status: "active" as const,
+    status: "active",
     engagement: 68,
   },
   {
@@ -85,7 +95,7 @@ const subscribers = [
     email: "pedro.c@email.com",
     source: "smart-link",
     joined: "Jan 5, 2026",
-    status: "active" as const,
+    status: "active",
     engagement: 55,
   },
 ];
@@ -112,6 +122,34 @@ function sourceLabel(source: string) {
 export default function FanCRMPage() {
   const [activeSegment, setActiveSegment] = useState<Segment>("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [subscribers, setSubscribers] = useState<Subscriber[]>(mockSubscribers);
+
+  const fetchSubscribers = useCallback(async (segment?: Segment, search?: string) => {
+    try {
+      const params = new URLSearchParams();
+      if (segment && segment !== "all") {
+        const statusMap: Record<string, string> = { superfans: "active", inactive: "inactive" };
+        if (statusMap[segment]) params.set("status", statusMap[segment]);
+        if (segment === "new") params.set("status", "new");
+      }
+      if (search) params.set("search", search);
+      const qs = params.toString();
+      const data = await apiGet<Subscriber[]>(`/api/subscribers${qs ? `?${qs}` : ""}`);
+      if (Array.isArray(data) && data.length > 0) {
+        setSubscribers(data);
+      }
+    } catch {
+      // API unavailable — keep mock data
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchSubscribers();
+  }, [fetchSubscribers]);
+
+  useEffect(() => {
+    fetchSubscribers(activeSegment, searchQuery);
+  }, [activeSegment, searchQuery, fetchSubscribers]);
 
   const filteredSubscribers = subscribers.filter((sub) => {
     const matchesSearch =

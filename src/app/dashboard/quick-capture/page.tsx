@@ -23,7 +23,8 @@ import {
   Sparkles,
   Bookmark,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { apiGet, apiPost, apiPatch } from "@/lib/api-client";
 
 type CaptureType = "note" | "lyric" | "contact" | "task" | "link";
 type Priority = "low" | "medium" | "high";
@@ -177,8 +178,33 @@ export default function QuickCapturePage() {
   const [filterTag, setFilterTag] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedPriority, setSelectedPriority] = useState<Priority>("medium");
+  const [captures, setCaptures] = useState<CaptureItem[]>(mockCaptures);
 
-  const filteredCaptures = mockCaptures.filter((item) => {
+  useEffect(() => {
+    apiGet<CaptureItem[]>("/api/captures")
+      .then((d) => setCaptures(d))
+      .catch(() => {/* keep mock data */});
+  }, []);
+
+  const saveCapture = async (captureData: Partial<CaptureItem>) => {
+    try {
+      const newCapture = await apiPost<CaptureItem>("/api/captures", captureData);
+      setCaptures((prev) => [newCapture, ...prev]);
+    } catch {
+      /* keep current state */
+    }
+  };
+
+  const archiveCapture = async (id: number) => {
+    try {
+      await apiPatch("/api/captures", { id, archived: true });
+      setCaptures((prev) => prev.filter((c) => c.id !== id));
+    } catch {
+      /* keep current state */
+    }
+  };
+
+  const filteredCaptures = captures.filter((item) => {
     if (filterType !== "all" && item.type !== filterType) return false;
     if (filterTag !== "all" && !item.tags.includes(filterTag)) return false;
     if (searchQuery && !item.content.toLowerCase().includes(searchQuery.toLowerCase())) return false;
@@ -433,7 +459,7 @@ export default function QuickCapturePage() {
                             <button className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Edit">
                               <Edit3 size={13} />
                             </button>
-                            <button className="p-1.5 text-gray-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors" title="Archive">
+                            <button onClick={() => archiveCapture(item.id)} className="p-1.5 text-gray-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors" title="Archive">
                               <Archive size={13} />
                             </button>
                             <button className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors" title="Convert to Release Plan Task">

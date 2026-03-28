@@ -1,6 +1,7 @@
 "use client";
 
 import DashboardSidebar from "@/components/DashboardSidebar";
+import { apiGet, apiPost } from "@/lib/api-client";
 import {
   Bell,
   Plus,
@@ -18,7 +19,7 @@ import {
   Trash2,
   Eye,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 type TaskStatus = "done" | "in-progress" | "upcoming";
 type PlanPhase = {
@@ -37,7 +38,7 @@ type ReleasePlan = {
   phases: PlanPhase[];
 };
 
-const releasePlans: ReleasePlan[] = [
+const mockReleasePlans: ReleasePlan[] = [
   {
     id: "rp1",
     title: "Golden Hour - Single Release",
@@ -121,9 +122,28 @@ const releasePlans: ReleasePlan[] = [
 ];
 
 export default function ReleasePlansPage() {
+  const [releasePlans, setReleasePlans] = useState<ReleasePlan[]>(mockReleasePlans);
   const [expandedPlan, setExpandedPlan] = useState<string | null>("rp1");
   const [showCreate, setShowCreate] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [formTitle, setFormTitle] = useState("");
+  const [formDate, setFormDate] = useState("");
+  const [formType, setFormType] = useState("Single");
+  const [formGenre, setFormGenre] = useState("Pop / Electronic");
+  const [formContext, setFormContext] = useState("");
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const data = await apiGet<ReleasePlan[]>("/api/releases");
+        if (data && data.length > 0) {
+          setReleasePlans(data);
+        }
+      } catch {
+        // keep mock data
+      }
+    })();
+  }, []);
 
   const statusIcon = (s: TaskStatus) => {
     switch (s) {
@@ -133,10 +153,29 @@ export default function ReleasePlansPage() {
     }
   };
 
-  const handleGenerate = () => {
+  const handleGenerate = async () => {
     setShowCreate(false);
     setGenerating(true);
-    setTimeout(() => setGenerating(false), 2500);
+    try {
+      const data = await apiPost<{ plan: ReleasePlan }>("/api/ai/generate", {
+        type: "release-plan",
+        context: { title: formTitle, releaseDate: formDate, type: formType, genre: formGenre, additionalContext: formContext },
+      });
+      if (data.plan) {
+        // Also persist the release
+        try {
+          await apiPost("/api/releases", { title: formTitle, type: formType, releaseDate: formDate, genre: formGenre });
+        } catch {
+          // ignore save error — plan was still generated
+        }
+        setReleasePlans((prev) => [data.plan, ...prev]);
+        setExpandedPlan(data.plan.id);
+      }
+    } catch {
+      // Fall back to mock animation only
+    } finally {
+      setGenerating(false);
+    }
   };
 
   return (
@@ -166,15 +205,15 @@ export default function ReleasePlansPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div>
                   <label className="block text-sm font-medium mb-1.5">Release Title</label>
-                  <input type="text" placeholder="e.g. Golden Hour" className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20 focus:border-[var(--primary)]" />
+                  <input type="text" value={formTitle} onChange={(e) => setFormTitle(e.target.value)} placeholder="e.g. Golden Hour" className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20 focus:border-[var(--primary)]" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1.5">Release Date</label>
-                  <input type="date" className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20 focus:border-[var(--primary)]" />
+                  <input type="date" value={formDate} onChange={(e) => setFormDate(e.target.value)} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20 focus:border-[var(--primary)]" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1.5">Release Type</label>
-                  <select className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20">
+                  <select value={formType} onChange={(e) => setFormType(e.target.value)} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20">
                     <option>Single</option>
                     <option>EP</option>
                     <option>Album</option>
@@ -182,12 +221,12 @@ export default function ReleasePlansPage() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1.5">Genre</label>
-                  <input type="text" defaultValue="Pop / Electronic" className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20 focus:border-[var(--primary)]" />
+                  <input type="text" value={formGenre} onChange={(e) => setFormGenre(e.target.value)} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20 focus:border-[var(--primary)]" />
                 </div>
               </div>
               <div className="mb-4">
                 <label className="block text-sm font-medium mb-1.5">Additional context for the AI</label>
-                <textarea rows={3} placeholder="Any details about the release, target audience, goals..." className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20 resize-none" />
+                <textarea rows={3} value={formContext} onChange={(e) => setFormContext(e.target.value)} placeholder="Any details about the release, target audience, goals..." className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20 resize-none" />
               </div>
               <div className="flex gap-3">
                 <button onClick={handleGenerate} className="bg-[var(--primary)] hover:bg-[var(--primary-dark)] text-white font-medium text-sm px-5 py-2.5 rounded-lg transition-colors inline-flex items-center gap-2">

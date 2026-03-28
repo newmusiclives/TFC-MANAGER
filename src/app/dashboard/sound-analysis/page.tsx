@@ -28,7 +28,8 @@ import {
   Play,
   CalendarDays,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { apiPost } from "@/lib/api-client";
 
 /* ───── mock data ───── */
 
@@ -143,6 +144,38 @@ function CircularScore({ score, size = 120 }: { score: number; size?: number }) 
 export default function SoundAnalysisPage() {
   const [analyzed, setAnalyzed] = useState(true);
   const [dragging, setDragging] = useState(false);
+  const [analysisData, setAnalysisData] = useState<{
+    audioDNA: typeof audioDNA;
+    genreTags: typeof genreTags;
+    moodTags: typeof moodTags;
+    playlistReadiness: typeof playlistReadiness;
+    mixingSuggestions: typeof mixingSuggestions;
+    playlistMatches: typeof playlistMatches;
+    similarTracks: typeof similarTracks;
+  } | null>(null);
+
+  const handleUploadAndAnalyze = async (trackTitle: string, metadata: Record<string, unknown> = {}) => {
+    try {
+      const result = await apiPost<typeof analysisData>("/api/ai/generate", {
+        type: "sound-analysis",
+        context: { trackTitle, metadata },
+      });
+      if (result) setAnalysisData(result);
+      setAnalyzed(true);
+    } catch {
+      // Fall back to mock analysis data
+      setAnalyzed(true);
+    }
+  };
+
+  // Use API data if available, otherwise fall back to mock
+  const currentAudioDNA = analysisData?.audioDNA ?? audioDNA;
+  const currentGenreTags = analysisData?.genreTags ?? genreTags;
+  const currentMoodTags = analysisData?.moodTags ?? moodTags;
+  const currentPlaylistReadiness = analysisData?.playlistReadiness ?? playlistReadiness;
+  const currentMixingSuggestions = analysisData?.mixingSuggestions ?? mixingSuggestions;
+  const currentPlaylistMatches = analysisData?.playlistMatches ?? playlistMatches;
+  const currentSimilarTracks = analysisData?.similarTracks ?? similarTracks;
 
   return (
     <div className="flex min-h-screen bg-gray-50">
@@ -170,7 +203,7 @@ export default function SoundAnalysisPage() {
             <div
               onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
               onDragLeave={() => setDragging(false)}
-              onDrop={(e) => { e.preventDefault(); setDragging(false); setAnalyzed(true); }}
+              onDrop={(e) => { e.preventDefault(); setDragging(false); handleUploadAndAnalyze("Golden Hour"); }}
               className={`border-2 border-dashed rounded-2xl p-16 flex flex-col items-center justify-center text-center transition-colors ${
                 dragging ? "border-[var(--primary)] bg-purple-50" : "border-gray-200 bg-white"
               }`}
@@ -181,7 +214,7 @@ export default function SoundAnalysisPage() {
               <p className="text-lg font-semibold text-gray-700 mb-1">Drag & drop your audio file here</p>
               <p className="text-sm text-gray-400 mb-4">Supports MP3, WAV, FLAC up to 50 MB</p>
               <button
-                onClick={() => setAnalyzed(true)}
+                onClick={() => handleUploadAndAnalyze("Golden Hour")}
                 className="bg-[var(--primary)] text-white px-6 py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 transition"
               >
                 Browse Files
@@ -234,7 +267,7 @@ export default function SoundAnalysisPage() {
                   <Activity size={20} className="text-[var(--primary)]" /> Audio DNA
                 </h2>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {audioDNA.map((attr) => {
+                  {currentAudioDNA.map((attr) => {
                     const Icon = attr.icon;
                     const isNumeric = typeof attr.value === "number";
                     return (
@@ -270,7 +303,7 @@ export default function SoundAnalysisPage() {
                 <div className="mb-4">
                   <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Auto-Detected Genres</p>
                   <div className="flex flex-wrap gap-2">
-                    {genreTags.map((g) => (
+                    {currentGenreTags.map((g) => (
                       <span key={g} className="px-3 py-1.5 rounded-full bg-violet-50 text-violet-700 text-sm font-medium">{g}</span>
                     ))}
                   </div>
@@ -278,7 +311,7 @@ export default function SoundAnalysisPage() {
                 <div>
                   <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Mood</p>
                   <div className="flex flex-wrap gap-2">
-                    {moodTags.map((m) => (
+                    {currentMoodTags.map((m) => (
                       <span key={m} className="px-3 py-1.5 rounded-full bg-pink-50 text-pink-700 text-sm font-medium">{m}</span>
                     ))}
                   </div>
@@ -291,9 +324,9 @@ export default function SoundAnalysisPage() {
                   <Target size={20} className="text-[var(--primary)]" /> Playlist Readiness Score
                 </h2>
                 <div className="flex flex-col md:flex-row items-center gap-10">
-                  <CircularScore score={playlistReadiness.overall} size={140} />
+                  <CircularScore score={currentPlaylistReadiness.overall} size={140} />
                   <div className="flex-1 w-full space-y-3">
-                    {playlistReadiness.breakdown.map((item) => (
+                    {currentPlaylistReadiness.breakdown.map((item) => (
                       <div key={item.label}>
                         <div className="flex justify-between text-sm mb-1">
                           <span className="text-gray-600">{item.label}</span>
@@ -319,7 +352,7 @@ export default function SoundAnalysisPage() {
                   <Lightbulb size={20} className="text-[var(--primary)]" /> AI Mixing Suggestions
                 </h2>
                 <div className="grid md:grid-cols-3 gap-4">
-                  {mixingSuggestions.map((s) => (
+                  {currentMixingSuggestions.map((s) => (
                     <div
                       key={s.title}
                       className={`rounded-xl border p-5 ${
@@ -349,7 +382,7 @@ export default function SoundAnalysisPage() {
                 </h2>
                 <p className="text-sm text-gray-500 mb-4">Based on sonic analysis, your track fits these playlists</p>
                 <div className="space-y-3">
-                  {playlistMatches.map((pl) => (
+                  {currentPlaylistMatches.map((pl) => (
                     <div key={pl.name} className="flex items-center justify-between py-3 border-b border-gray-50 last:border-0">
                       <div className="flex items-center gap-4">
                         <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-green-400 to-emerald-600 flex items-center justify-center">
@@ -379,7 +412,7 @@ export default function SoundAnalysisPage() {
                   <CircleDot size={20} className="text-[var(--primary)]" /> Similar Sounding Tracks
                 </h2>
                 <div className="space-y-3">
-                  {similarTracks.map((t) => (
+                  {currentSimilarTracks.map((t) => (
                     <div key={t.title} className="flex items-start gap-4 py-3 border-b border-gray-50 last:border-0">
                       <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center shrink-0">
                         <Music2 size={18} className="text-gray-400" />

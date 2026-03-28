@@ -18,7 +18,8 @@ import {
   Shield,
   Trash2,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { apiGet, apiPatch } from "@/lib/api-client";
 
 type ConnectedAccount = {
   name: string;
@@ -28,45 +29,123 @@ type ConnectedAccount = {
   username?: string;
 };
 
+const defaultProfile = {
+  name: "Jordan Rivera",
+  email: "jordan@truefans.io",
+  artistName: "JRVR",
+};
+
+const defaultAccounts: ConnectedAccount[] = [
+  { name: "Spotify", icon: Music2, color: "bg-green-50 text-green-600", connected: true, username: "jrvr_official" },
+  { name: "Apple Music", icon: Headphones, color: "bg-pink-50 text-pink-600", connected: true, username: "jordanrivera" },
+  { name: "YouTube", icon: MonitorSpeaker, color: "bg-red-50 text-red-600", connected: false },
+];
+
+const defaultNotifPrefs = {
+  emailStreams: true,
+  emailPlaylists: true,
+  emailTasks: false,
+  pushReleases: true,
+  pushMilestones: true,
+  pushWeekly: true,
+};
+
+const platformAuthUrls: Record<string, string> = {
+  "Spotify": "/api/auth/spotify",
+  "Apple Music": "/api/auth/apple-music",
+  "YouTube": "/api/auth/youtube",
+};
+
 export default function SettingsPage() {
-  const [profile, setProfile] = useState({
-    name: "Jordan Rivera",
-    email: "jordan@truefans.io",
-    artistName: "JRVR",
-  });
+  const [profile, setProfile] = useState(defaultProfile);
 
-  const [accounts, setAccounts] = useState<ConnectedAccount[]>([
-    { name: "Spotify", icon: Music2, color: "bg-green-50 text-green-600", connected: true, username: "jrvr_official" },
-    { name: "Apple Music", icon: Headphones, color: "bg-pink-50 text-pink-600", connected: true, username: "jordanrivera" },
-    { name: "YouTube", icon: MonitorSpeaker, color: "bg-red-50 text-red-600", connected: false },
-  ]);
+  const [accounts, setAccounts] = useState<ConnectedAccount[]>(defaultAccounts);
 
-  const [notifPrefs, setNotifPrefs] = useState({
-    emailStreams: true,
-    emailPlaylists: true,
-    emailTasks: false,
-    pushReleases: true,
-    pushMilestones: true,
-    pushWeekly: true,
-  });
+  const [notifPrefs, setNotifPrefs] = useState(defaultNotifPrefs);
 
   const [saved, setSaved] = useState(false);
 
-  const handleSave = () => {
+  // Load profile data from API on mount
+  useEffect(() => {
+    apiGet<{
+      name?: string;
+      email?: string;
+      artistName?: string;
+      connectedAccounts?: { name: string; connected: boolean; username?: string }[];
+      notificationPreferences?: typeof defaultNotifPrefs;
+    }>("/api/users/me")
+      .then((data) => {
+        if (data.name || data.email || data.artistName) {
+          setProfile({
+            name: data.name || defaultProfile.name,
+            email: data.email || defaultProfile.email,
+            artistName: data.artistName || defaultProfile.artistName,
+          });
+        }
+        if (data.connectedAccounts) {
+          setAccounts((prev) =>
+            prev.map((a) => {
+              const match = data.connectedAccounts!.find((ca) => ca.name === a.name);
+              return match ? { ...a, connected: match.connected, username: match.username } : a;
+            })
+          );
+        }
+        if (data.notificationPreferences) {
+          setNotifPrefs(data.notificationPreferences);
+        }
+      })
+      .catch(() => {
+        // API not available, use hardcoded defaults
+      });
+  }, []);
+
+  const handleSave = async () => {
+    try {
+      await apiPatch("/api/users/me", {
+        ...profile,
+        notificationPreferences: notifPrefs,
+      });
+    } catch {
+      // API not available - show saved anyway for demo
+    }
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   };
 
   const toggleAccount = (index: number) => {
-    setAccounts((prev) =>
-      prev.map((a, i) =>
-        i === index ? { ...a, connected: !a.connected, username: a.connected ? undefined : "connected_user" } : a
-      )
-    );
+    const account = accounts[index];
+    if (!account.connected) {
+      // Redirect to OAuth flow for connecting
+      const authUrl = platformAuthUrls[account.name];
+      if (authUrl) {
+        window.location.href = authUrl;
+        return;
+      }
+    }
+    // Disconnect - call API then update state
+    (async () => {
+      try {
+        await apiPatch("/api/users/me", {
+          disconnectAccount: account.name,
+        });
+      } catch {
+        // API not available - toggle locally for demo
+      }
+      setAccounts((prev) =>
+        prev.map((a, i) =>
+          i === index ? { ...a, connected: !a.connected, username: a.connected ? undefined : "connected_user" } : a
+        )
+      );
+    })();
   };
 
   const toggleNotif = (key: keyof typeof notifPrefs) => {
-    setNotifPrefs((prev) => ({ ...prev, [key]: !prev[key] }));
+    const updated = { ...notifPrefs, [key]: !notifPrefs[key] };
+    setNotifPrefs(updated);
+    // Persist notification preferences
+    apiPatch("/api/users/me", { notificationPreferences: updated }).catch(() => {
+      // API not available - local state already updated for demo
+    });
   };
 
   return (

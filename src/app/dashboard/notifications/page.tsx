@@ -15,7 +15,8 @@ import {
   CheckCheck,
   Clock,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { apiGet, apiPatch } from "@/lib/api-client";
 
 type NotificationCategory = "all" | "releases" | "analytics" | "tasks" | "system";
 
@@ -141,9 +142,53 @@ const categoryTabs: { key: NotificationCategory; label: string; icon: React.Elem
   { key: "system", label: "System", icon: Settings },
 ];
 
+// Map icon names from API to components for hydration
+const iconMap: Record<string, React.ElementType> = {
+  TrendingUp,
+  ListMusic,
+  CheckSquare,
+  Users,
+  Sparkles,
+  BarChart3,
+  AlertCircle,
+  Music2,
+  Settings,
+  Bell,
+};
+
 export default function NotificationsPage() {
   const [activeTab, setActiveTab] = useState<NotificationCategory>("all");
   const [notifications, setNotifications] = useState(initialNotifications);
+
+  // Load notifications from API on mount
+  useEffect(() => {
+    apiGet<{
+      notifications?: {
+        id: number;
+        title: string;
+        description: string;
+        time: string;
+        category: Exclude<NotificationCategory, "all">;
+        read: boolean;
+        iconName?: string;
+        iconColor?: string;
+      }[];
+    }>("/api/notifications")
+      .then((data) => {
+        if (data.notifications && data.notifications.length > 0) {
+          setNotifications(
+            data.notifications.map((n) => ({
+              ...n,
+              icon: iconMap[n.iconName || "Bell"] || Bell,
+              iconColor: n.iconColor || "bg-gray-100 text-gray-600",
+            }))
+          );
+        }
+      })
+      .catch(() => {
+        // API not available, use mock data (initialNotifications already set)
+      });
+  }, []);
 
   const filtered =
     activeTab === "all"
@@ -154,12 +199,20 @@ export default function NotificationsPage() {
 
   const markAllRead = () => {
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+    // Persist to API
+    apiPatch("/api/notifications", { markAllRead: true }).catch(() => {
+      // API not available - local state already updated
+    });
   };
 
   const toggleRead = (id: number) => {
     setNotifications((prev) =>
       prev.map((n) => (n.id === id ? { ...n, read: !n.read } : n))
     );
+    // Persist to API
+    apiPatch("/api/notifications", { ids: [id] }).catch(() => {
+      // API not available - local state already updated
+    });
   };
 
   return (

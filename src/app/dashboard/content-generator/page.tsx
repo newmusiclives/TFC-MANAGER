@@ -1,6 +1,7 @@
 "use client";
 
 import DashboardSidebar from "@/components/DashboardSidebar";
+import { apiPost } from "@/lib/api-client";
 import {
   Bell,
   Sparkles,
@@ -57,17 +58,28 @@ export default function ContentGeneratorPage() {
   const [selectedType, setSelectedType] = useState<ContentType>("social");
   const [release, setRelease] = useState("Midnight Dreams");
   const [tone, setTone] = useState("authentic");
+  const [platform, setPlatform] = useState("All Platforms");
+  const [additionalContext, setAdditionalContext] = useState("");
   const [generated, setGenerated] = useState<string[]>([]);
   const [generating, setGenerating] = useState(false);
   const [copied, setCopied] = useState<number | null>(null);
 
-  const handleGenerate = () => {
+  const handleGenerate = async () => {
     setGenerating(true);
     setGenerated([]);
-    setTimeout(() => {
+    try {
+      const data = await apiPost<{ content: string[] | string }>("/api/ai/generate", {
+        type: selectedType,
+        context: { track: release, tone, platform, additionalContext },
+      });
+      const results = Array.isArray(data.content) ? data.content : [data.content];
+      setGenerated(results);
+    } catch {
+      // Fall back to hardcoded examples
       setGenerated(generatedExamples[selectedType]);
+    } finally {
       setGenerating(false);
-    }, 1500);
+    }
   };
 
   const handleCopy = (text: string, idx: number) => {
@@ -159,7 +171,11 @@ export default function ContentGeneratorPage() {
                     <label className="block text-xs font-medium text-gray-500 mb-1">
                       Platform Focus
                     </label>
-                    <select className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20">
+                    <select
+                      value={platform}
+                      onChange={(e) => setPlatform(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20"
+                    >
                       <option>All Platforms</option>
                       <option>Instagram</option>
                       <option>TikTok</option>
@@ -173,6 +189,8 @@ export default function ContentGeneratorPage() {
                     </label>
                     <textarea
                       rows={3}
+                      value={additionalContext}
+                      onChange={(e) => setAdditionalContext(e.target.value)}
                       placeholder="Any specific angle, message, or detail to include..."
                       className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20 resize-none"
                     />

@@ -21,7 +21,8 @@ import {
   X,
   Calendar,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { apiGet, apiPost } from "@/lib/api-client";
 
 interface Tier {
   id: string;
@@ -122,11 +123,28 @@ export default function FanFundingPage() {
     deadline: "",
     description: "",
   });
+  const [campaignList, setCampaignList] = useState<Campaign[]>(campaigns);
 
-  const totalRaised = campaigns.reduce((sum, c) => sum + c.raised, 0);
-  const totalBackers = campaigns.reduce((sum, c) => sum + c.backers, 0);
+  useEffect(() => {
+    apiGet<Campaign[]>("/api/campaigns")
+      .then((d) => setCampaignList(d))
+      .catch(() => {/* keep mock data */});
+  }, []);
+
+  const createCampaign = async (campaignData: typeof formData) => {
+    try {
+      const newCampaign = await apiPost<Campaign>("/api/campaigns", campaignData);
+      setCampaignList((prev) => [...prev, newCampaign]);
+      setShowCreateForm(false);
+    } catch {
+      /* keep current state */
+    }
+  };
+
+  const totalRaised = campaignList.reduce((sum, c) => sum + c.raised, 0);
+  const totalBackers = campaignList.reduce((sum, c) => sum + c.backers, 0);
   const avgPledge = totalBackers > 0 ? (totalRaised / totalBackers).toFixed(2) : "0.00";
-  const activeCampaigns = campaigns.filter((c) => c.status === "active");
+  const activeCampaigns = campaignList.filter((c) => c.status === "active");
 
   const setTabForCampaign = (campaignId: string, tab: "tiers" | "backers") => {
     setBacterTab((prev) => ({ ...prev, [campaignId]: tab }));
@@ -299,6 +317,7 @@ export default function FanFundingPage() {
                   Cancel
                 </button>
                 <button
+                  onClick={() => createCampaign(formData)}
                   className="flex items-center gap-2 px-5 py-2 text-sm font-medium text-white rounded-lg hover:opacity-90 transition-opacity"
                   style={{ backgroundColor: "var(--primary)" }}
                 >
@@ -310,7 +329,7 @@ export default function FanFundingPage() {
           )}
 
           {/* Campaigns */}
-          {campaigns.map((campaign) => {
+          {campaignList.map((campaign) => {
             const isExpanded = expandedCampaign === campaign.id;
             const progress = Math.min((campaign.raised / campaign.goal) * 100, 100);
             const isCompleted = campaign.status === "completed";

@@ -30,7 +30,8 @@ import {
   BarChart3,
   ArrowUpRight,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { apiGet, apiPost } from "@/lib/api-client";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -132,9 +133,46 @@ export default function SocialSchedulerPage() {
   const [postDate, setPostDate] = useState("2026-03-28");
   const [postTime, setPostTime] = useState("19:00");
   const [aiOptimized, setAiOptimized] = useState(false);
+  const [posts, setPosts] = useState<ScheduledPost[]>(mockPosts);
+  const [scheduling, setScheduling] = useState(false);
 
-  const scheduledPosts = mockPosts.filter((p) => p.status === "scheduled");
-  const postedPosts = mockPosts.filter((p) => p.status === "posted");
+  const fetchPosts = async () => {
+    try {
+      const data = await apiGet<ScheduledPost[]>("/api/social/schedule");
+      if (Array.isArray(data) && data.length > 0) {
+        setPosts(data);
+      }
+    } catch {
+      // API unavailable — keep mock data
+    }
+  };
+
+  useEffect(() => {
+    fetchPosts();
+  }, []);
+
+  const handleSchedulePost = async () => {
+    if (!postContent.trim() || selectedPlatforms.length === 0) return;
+    setScheduling(true);
+    try {
+      await apiPost("/api/social/schedule", {
+        platforms: selectedPlatforms,
+        content: postContent,
+        mediaUrl: null,
+        scheduledAt: `${postDate}T${postTime}:00`,
+      });
+      await fetchPosts();
+      setShowModal(false);
+      setPostContent("");
+    } catch {
+      // API unavailable — close modal silently
+    } finally {
+      setScheduling(false);
+    }
+  };
+
+  const scheduledPosts = posts.filter((p) => p.status === "scheduled");
+  const postedPosts = posts.filter((p) => p.status === "posted");
 
   const togglePlatform = (p: Platform) => {
     setSelectedPlatforms((prev) =>
@@ -272,10 +310,10 @@ export default function SocialSchedulerPage() {
                           {h === 0 ? "12 AM" : h < 12 ? `${h} AM` : h === 12 ? "12 PM" : `${h - 12} PM`}
                         </div>
                         {dayLabels.map((_, dayIdx) => {
-                          const posts = mockPosts.filter((p) => p.day === dayIdx && p.hour === h);
+                          const slotPosts = posts.filter((p) => p.day === dayIdx && p.hour === h);
                           return (
                             <div key={dayIdx} className="border-l border-gray-50 px-1 py-0.5 relative">
-                              {posts.map((post) => (
+                              {slotPosts.map((post) => (
                                 <div
                                   key={post.id}
                                   className={`rounded-lg px-2 py-1.5 mb-0.5 cursor-pointer text-xs leading-tight border transition-shadow hover:shadow-md ${
@@ -312,7 +350,7 @@ export default function SocialSchedulerPage() {
                   <div className="px-6 py-4 border-b border-gray-100">
                     <h3 className="font-semibold text-sm">All Scheduled &amp; Posted</h3>
                   </div>
-                  {[...mockPosts]
+                  {[...posts]
                     .sort((a, b) => `${a.date}${a.time}`.localeCompare(`${b.date}${b.time}`))
                     .map((post) => (
                       <div key={post.id} className="flex items-center gap-4 px-6 py-4 hover:bg-gray-50 transition-colors">
@@ -495,7 +533,7 @@ export default function SocialSchedulerPage() {
                   <p className="text-xs text-gray-400 mt-0.5">{scheduledPosts.length} scheduled</p>
                 </div>
                 <div className="divide-y divide-gray-50 max-h-[600px] overflow-y-auto">
-                  {[...scheduledPosts, ...mockPosts.filter((p) => p.status === "failed")]
+                  {[...scheduledPosts, ...posts.filter((p) => p.status === "failed")]
                     .sort((a, b) => `${a.date}${a.time}`.localeCompare(`${b.date}${b.time}`))
                     .map((post) => (
                       <div key={post.id} className="px-5 py-3 hover:bg-gray-50 transition-colors">
@@ -690,11 +728,12 @@ export default function SocialSchedulerPage() {
                     Save as Draft
                   </button>
                   <button
-                    onClick={() => setShowModal(false)}
-                    className="px-5 py-2 rounded-xl bg-purple-600 text-white text-sm font-medium hover:bg-purple-700 transition-colors flex items-center gap-2"
+                    onClick={handleSchedulePost}
+                    disabled={scheduling}
+                    className="px-5 py-2 rounded-xl bg-purple-600 text-white text-sm font-medium hover:bg-purple-700 transition-colors flex items-center gap-2 disabled:opacity-50"
                   >
                     <CalendarDays size={15} />
-                    Schedule Post
+                    {scheduling ? "Scheduling..." : "Schedule Post"}
                   </button>
                 </div>
               </div>

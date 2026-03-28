@@ -29,8 +29,10 @@ import {
   Bar,
   Cell,
 } from "recharts";
+import { useState, useEffect } from "react";
+import { apiGet } from "@/lib/api-client";
 
-const monthlyEarnings = [
+const mockMonthlyEarnings = [
   { month: "Apr '25", earnings: 82 },
   { month: "May '25", earnings: 96 },
   { month: "Jun '25", earnings: 110 },
@@ -45,7 +47,7 @@ const monthlyEarnings = [
   { month: "Mar '26", earnings: 312 },
 ];
 
-const platformBreakdown = [
+const mockPlatformBreakdown = [
   { platform: "Spotify", earned: 1420.3, pct: 49.9, color: "#1DB954" },
   { platform: "Apple Music", earned: 684.2, pct: 24.0, color: "#fc3c44" },
   { platform: "YouTube", earned: 398.5, pct: 14.0, color: "#ff0000" },
@@ -54,7 +56,7 @@ const platformBreakdown = [
   { platform: "Other", earned: 57.0, pct: 2.0, color: "#9ca3af" },
 ];
 
-const releaseEarnings = [
+const mockReleaseEarnings = [
   { title: "Midnight Dreams", type: "Single", totalEarned: 1240.5, thisMonth: 142.3, trend: "+12.4%", up: true },
   { title: "Summer Waves EP", type: "EP", totalEarned: 680.2, thisMonth: 78.6, trend: "+8.1%", up: true },
   { title: "Electric Feel", type: "Single", totalEarned: 420.1, thisMonth: 45.2, trend: "-3.2%", up: false },
@@ -62,7 +64,7 @@ const releaseEarnings = [
   { title: "Neon Lights", type: "Single", totalEarned: 196.0, thisMonth: 14.25, trend: "+1.8%", up: true },
 ];
 
-const revenuePerStream = [
+const mockRevenuePerStream = [
   { platform: "Tidal", rps: 0.012, color: "#000000" },
   { platform: "Apple Music", rps: 0.008, color: "#fc3c44" },
   { platform: "Deezer", rps: 0.005, color: "#a238ff" },
@@ -70,7 +72,7 @@ const revenuePerStream = [
   { platform: "YouTube", rps: 0.002, color: "#ff0000" },
 ];
 
-const paymentHistory = [
+const mockPaymentHistory = [
   { date: "Mar 15, 2026", amount: 312.45, status: "pending", source: "All Platforms" },
   { date: "Feb 15, 2026", amount: 290.1, status: "paid", source: "All Platforms" },
   { date: "Jan 15, 2026", amount: 268.3, status: "paid", source: "All Platforms" },
@@ -79,7 +81,38 @@ const paymentHistory = [
   { date: "Oct 15, 2025", amount: 198.55, status: "paid", source: "All Platforms" },
 ];
 
+interface EarningsData {
+  monthlyEarnings?: typeof mockMonthlyEarnings;
+  platformBreakdown?: typeof mockPlatformBreakdown;
+  releaseEarnings?: typeof mockReleaseEarnings;
+  revenuePerStream?: typeof mockRevenuePerStream;
+  paymentHistory?: typeof mockPaymentHistory;
+}
+
 export default function EarningsPage() {
+  const [monthlyEarnings, setMonthlyEarnings] = useState(mockMonthlyEarnings);
+  const [platformBreakdown, setPlatformBreakdown] = useState(mockPlatformBreakdown);
+  const [releaseEarnings, setReleaseEarnings] = useState(mockReleaseEarnings);
+  const [revenuePerStream, setRevenuePerStream] = useState(mockRevenuePerStream);
+  const [paymentHistory, setPaymentHistory] = useState(mockPaymentHistory);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const data = await apiGet<EarningsData>("/api/earnings");
+        if (data) {
+          if (Array.isArray(data.monthlyEarnings) && data.monthlyEarnings.length > 0) setMonthlyEarnings(data.monthlyEarnings);
+          if (Array.isArray(data.platformBreakdown) && data.platformBreakdown.length > 0) setPlatformBreakdown(data.platformBreakdown);
+          if (Array.isArray(data.releaseEarnings) && data.releaseEarnings.length > 0) setReleaseEarnings(data.releaseEarnings);
+          if (Array.isArray(data.revenuePerStream) && data.revenuePerStream.length > 0) setRevenuePerStream(data.revenuePerStream);
+          if (Array.isArray(data.paymentHistory) && data.paymentHistory.length > 0) setPaymentHistory(data.paymentHistory);
+        }
+      } catch {
+        // API unavailable — keep mock data
+      }
+    })();
+  }, []);
+
   return (
     <div className="flex min-h-screen bg-gray-50">
       <DashboardSidebar />

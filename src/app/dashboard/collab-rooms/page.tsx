@@ -2,7 +2,8 @@
 
 import DashboardSidebar from "@/components/DashboardSidebar";
 import { Bell, Users, Plus, Music2, Play, Pause, MessageSquare, ThumbsUp, ThumbsDown, Clock, Lock, ExternalLink, Crown } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { apiGet, apiPost } from "@/lib/api-client";
 
 const rooms = [
   {
@@ -68,6 +69,23 @@ export default function CollabRoomsPage() {
   const [expandedRoom, setExpandedRoom] = useState<string | null>("r1");
   const [showCreate, setShowCreate] = useState(false);
   const [playing, setPlaying] = useState(false);
+  const [roomList, setRoomList] = useState(rooms);
+
+  useEffect(() => {
+    apiGet<typeof rooms>("/api/collab-rooms")
+      .then((d) => setRoomList(d))
+      .catch(() => {/* keep mock data */});
+  }, []);
+
+  const createRoom = async (roomData: { name: string; track: string; members: string }) => {
+    try {
+      const newRoom = await apiPost<(typeof rooms)[0]>("/api/collab-rooms", roomData);
+      setRoomList((prev) => [...prev, newRoom]);
+      setShowCreate(false);
+    } catch {
+      /* keep current state */
+    }
+  };
 
   return (
     <div className="flex min-h-screen bg-gray-50">
@@ -119,7 +137,7 @@ export default function CollabRoomsPage() {
           )}
 
           <div className="space-y-4">
-            {rooms.map((room) => (
+            {roomList.map((room) => (
               <div key={room.id} className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
                 <div className="p-6 cursor-pointer hover:bg-gray-50/50 transition-colors" onClick={() => setExpandedRoom(expandedRoom === room.id ? null : room.id)}>
                   <div className="flex items-center justify-between">

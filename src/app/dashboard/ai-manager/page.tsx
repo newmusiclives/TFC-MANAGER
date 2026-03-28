@@ -1,6 +1,7 @@
 "use client";
 
 import DashboardSidebar from "@/components/DashboardSidebar";
+import { apiPost } from "@/lib/api-client";
 import { Send, Bot, User, Sparkles, RotateCcw, Lightbulb, TrendingUp, Music2, Megaphone, Clock } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 
@@ -132,21 +133,34 @@ What would you like to work on today?`,
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const handleSend = (text?: string) => {
+  const handleSend = async (text?: string) => {
     const msg = text || input;
     if (!msg.trim()) return;
 
     const userMsg: Message = { role: "user", content: msg, timestamp: "Just now" };
-    setMessages((prev) => [...prev, userMsg]);
+    const updatedMessages = [...messages, userMsg];
+    setMessages(updatedMessages);
     setInput("");
     setTyping(true);
 
-    setTimeout(() => {
+    try {
+      const apiMessages = updatedMessages.map((m) => ({
+        role: m.role === "ai" ? "assistant" : "user",
+        content: m.content,
+      }));
+      const data = await apiPost<{ message: string }>("/api/ai/chat", {
+        messages: apiMessages,
+      });
+      const aiMsg: Message = { role: "ai", content: data.message, timestamp: "Just now" };
+      setMessages((prev) => [...prev, aiMsg]);
+    } catch {
+      // Fall back to hardcoded responses
       const response = aiResponses[msg] || defaultResponse;
       const aiMsg: Message = { role: "ai", content: response, timestamp: "Just now" };
       setMessages((prev) => [...prev, aiMsg]);
+    } finally {
       setTyping(false);
-    }, 1500 + Math.random() * 1000);
+    }
   };
 
   return (

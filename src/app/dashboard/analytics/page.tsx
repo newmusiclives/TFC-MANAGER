@@ -1,6 +1,7 @@
 "use client";
 
 import DashboardSidebar from "@/components/DashboardSidebar";
+import { apiGet } from "@/lib/api-client";
 import {
   Bell,
   Play,
@@ -13,6 +14,7 @@ import {
   Heart,
   Music2,
 } from "lucide-react";
+import { useState, useEffect } from "react";
 import {
   AreaChart,
   Area,
@@ -30,7 +32,7 @@ import {
   Line,
 } from "recharts";
 
-const streamHistory = [
+const mockStreamHistory = [
   { date: "Oct 1", streams: 320, listeners: 180 },
   { date: "Oct 8", streams: 410, listeners: 220 },
   { date: "Oct 15", streams: 380, listeners: 195 },
@@ -59,7 +61,7 @@ const streamHistory = [
   { date: "Mar 25", streams: 2950, listeners: 1580 },
 ];
 
-const platformBreakdown = [
+const mockPlatformBreakdown = [
   { name: "Spotify", value: 48, streams: 61680, color: "#1DB954" },
   { name: "Apple Music", value: 22, streams: 28270, color: "#fc3c44" },
   { name: "YouTube Music", value: 15, streams: 19275, color: "#ff0000" },
@@ -68,7 +70,7 @@ const platformBreakdown = [
   { name: "Other", value: 3, streams: 3855, color: "#9ca3af" },
 ];
 
-const topTracks = [
+const mockTopTracks = [
   { name: "Midnight Dreams", streams: 22100, change: "+18.2%", up: true },
   { name: "Summer Waves", streams: 15200, change: "+5.1%", up: true },
   { name: "Electric Feel", streams: 18300, change: "-2.3%", up: false },
@@ -76,7 +78,7 @@ const topTracks = [
   { name: "Neon Lights", streams: 9400, change: "+1.2%", up: true },
 ];
 
-const topCountries = [
+const mockTopCountries = [
   { country: "United States", listeners: 5840, pct: 32.1 },
   { country: "France", listeners: 2910, pct: 16.0 },
   { country: "United Kingdom", listeners: 2100, pct: 11.5 },
@@ -87,7 +89,7 @@ const topCountries = [
   { country: "Other", listeners: 2710, pct: 14.9 },
 ];
 
-const demographics = [
+const mockDemographics = [
   { age: "13-17", pct: 8 },
   { age: "18-24", pct: 34 },
   { age: "25-34", pct: 38 },
@@ -95,7 +97,41 @@ const demographics = [
   { age: "45+", pct: 6 },
 ];
 
+const mockMetrics = [
+  { label: "Total Streams", value: "128.5K", change: "+23.5%", up: true, icon: Play, color: "bg-blue-50 text-blue-600" },
+  { label: "Monthly Listeners", value: "18.2K", change: "+12.8%", up: true, icon: Users, color: "bg-purple-50 text-purple-600" },
+  { label: "Avg. Daily Streams", value: "2,950", change: "+8.4%", up: true, icon: TrendingUp, color: "bg-green-50 text-green-600" },
+  { label: "Save Rate", value: "24.3%", change: "+2.1%", up: true, icon: Heart, color: "bg-pink-50 text-pink-600" },
+];
+
+type Metric = { label: string; value: string; change: string; up: boolean; icon: React.ElementType; color: string };
+
 export default function AnalyticsPage() {
+  const [streamHistory, setStreamHistory] = useState(mockStreamHistory);
+  const [platformBreakdown, setPlatformBreakdown] = useState(mockPlatformBreakdown);
+  const [topTracks, setTopTracks] = useState(mockTopTracks);
+  const [topCountries, setTopCountries] = useState(mockTopCountries);
+  const [demographics, setDemographics] = useState(mockDemographics);
+  const [metrics, setMetrics] = useState<Metric[]>(mockMetrics);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const data = await apiGet<Record<string, unknown>>("/api/streaming/sync");
+        if (data) {
+          if (Array.isArray((data as any).streamHistory)) setStreamHistory((data as any).streamHistory);
+          if (Array.isArray((data as any).platformBreakdown)) setPlatformBreakdown((data as any).platformBreakdown);
+          if (Array.isArray((data as any).topTracks)) setTopTracks((data as any).topTracks);
+          if (Array.isArray((data as any).topCountries)) setTopCountries((data as any).topCountries);
+          if (Array.isArray((data as any).demographics)) setDemographics((data as any).demographics);
+          if ((data as any).metrics) setMetrics((data as any).metrics);
+        }
+      } catch {
+        // keep mock data
+      }
+    })();
+  }, []);
+
   return (
     <div className="flex min-h-screen bg-gray-50">
       <DashboardSidebar />
@@ -123,12 +159,7 @@ export default function AnalyticsPage() {
         <div className="p-8">
           {/* Key metrics */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-            {[
-              { label: "Total Streams", value: "128.5K", change: "+23.5%", up: true, icon: Play, color: "bg-blue-50 text-blue-600" },
-              { label: "Monthly Listeners", value: "18.2K", change: "+12.8%", up: true, icon: Users, color: "bg-purple-50 text-purple-600" },
-              { label: "Avg. Daily Streams", value: "2,950", change: "+8.4%", up: true, icon: TrendingUp, color: "bg-green-50 text-green-600" },
-              { label: "Save Rate", value: "24.3%", change: "+2.1%", up: true, icon: Heart, color: "bg-pink-50 text-pink-600" },
-            ].map((m) => (
+            {metrics.map((m) => (
               <div key={m.label} className="bg-white rounded-xl p-5 border border-gray-100">
                 <div className="flex items-center justify-between mb-3">
                   <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${m.color}`}>
