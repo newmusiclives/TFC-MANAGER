@@ -1,0 +1,451 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── AUTH & USERS ────────────────────────────────────────────
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  passwordHash  String
+  name          String
+  artistName    String?
+  avatar        String?
+  bio           String?
+  genre         String?
+  location      String?
+  plan          Plan      @default(STARTER)
+  role          UserRole  @default(ARTIST)
+  truefansConnectId String? @unique
+  onboardingComplete Boolean @default(false)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  releases      Release[]
+  smartLinks    SmartLink[]
+  analytics     AnalyticsSnapshot[]
+  earnings      Earning[]
+  subscribers   Subscriber[]
+  campaigns     FanCampaign[]
+  captures      QuickCapture[]
+  gigs          Gig[]
+  contracts     Contract[]
+  collaborations CollabRoom[]
+  splits        RevenueSplit[]
+  socialPosts   ScheduledPost[]
+  notifications Notification[]
+  connectedAccounts ConnectedAccount[]
+  listeningLinks ListeningLink[]
+  storyboards   Storyboard[]
+  aiConversations AIConversation[]
+}
+
+enum Plan {
+  STARTER
+  PRO
+  BUSINESS
+}
+
+enum UserRole {
+  ARTIST
+  ADMIN
+  SUPER_ADMIN
+}
+
+// ─── RELEASES & DISTRIBUTION ─────────────────────────────────
+
+model Release {
+  id            String    @id @default(cuid())
+  userId        String
+  title         String
+  type          ReleaseType @default(SINGLE)
+  releaseDate   DateTime?
+  coverArtUrl   String?
+  audioUrl      String?
+  isrc          String?
+  upc           String?
+  genre         String?
+  status        ReleaseStatus @default(DRAFT)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  distributions Distribution[]
+  smartLinks    SmartLink[]
+  releasePlan   ReleasePlan?
+  earnings      Earning[]
+  splits        RevenueSplit[]
+
+  @@index([userId])
+}
+
+enum ReleaseType {
+  SINGLE
+  EP
+  ALBUM
+}
+
+enum ReleaseStatus {
+  DRAFT
+  SUBMITTED
+  IN_REVIEW
+  APPROVED
+  LIVE
+  ARCHIVED
+}
+
+model Distribution {
+  id          String   @id @default(cuid())
+  releaseId   String
+  platform    String
+  status      DistributionStatus @default(PENDING)
+  externalId  String?
+  liveUrl     String?
+  submittedAt DateTime?
+  liveAt      DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  release     Release  @relation(fields: [releaseId], references: [id], onDelete: Cascade)
+
+  @@index([releaseId])
+}
+
+enum DistributionStatus {
+  PENDING
+  SUBMITTED
+  IN_REVIEW
+  APPROVED
+  LIVE
+  REJECTED
+}
+
+model ReleasePlan {
+  id          String   @id @default(cuid())
+  releaseId   String   @unique
+  phases      Json     // Array of phases with tasks
+  progress    Int      @default(0)
+  status      String   @default("draft")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  release     Release  @relation(fields: [releaseId], references: [id], onDelete: Cascade)
+}
+
+// ─── SMART LINKS & LISTENING LINKS ──────────────────────────
+
+model SmartLink {
+  id          String   @id @default(cuid())
+  userId      String
+  releaseId   String?
+  title       String
+  slug        String   @unique
+  platformLinks Json   // { spotify: url, apple: url, ... }
+  clicks      Int      @default(0)
+  views       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  release     Release? @relation(fields: [releaseId], references: [id])
+
+  @@index([userId])
+  @@index([slug])
+}
+
+model ListeningLink {
+  id          String   @id @default(cuid())
+  userId      String
+  title       String
+  slug        String   @unique
+  audioUrl    String
+  password    String?
+  maxPlays    Int      @default(50)
+  plays       Int      @default(0)
+  expiresAt   DateTime
+  status      String   @default("active")
+  recipients  Json?    // Array of { name, email, played, playedAt }
+  createdAt   DateTime @default(now())
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([slug])
+}
+
+// ─── ANALYTICS ───────────────────────────────────────────────
+
+model AnalyticsSnapshot {
+  id              String   @id @default(cuid())
+  userId          String
+  date            DateTime
+  totalStreams     Int      @default(0)
+  monthlyListeners Int     @default(0)
+  followers       Int      @default(0)
+  saveRate        Float    @default(0)
+  platformBreakdown Json?  // { spotify: n, apple: n, ... }
+  topCountries    Json?    // [{ country, listeners }]
+  demographics    Json?    // { age, gender }
+  createdAt       DateTime @default(now())
+
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, date])
+}
+
+// ─── EARNINGS & PAYMENTS ─────────────────────────────────────
+
+model Earning {
+  id          String   @id @default(cuid())
+  userId      String
+  releaseId   String?
+  platform    String
+  amount      Float
+  currency    String   @default("USD")
+  period      String   // "2026-03"
+  paidOut     Boolean  @default(false)
+  paidAt      DateTime?
+  manifestTxId String? // Manifest Financials transaction ID
+  createdAt   DateTime @default(now())
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  release     Release? @relation(fields: [releaseId], references: [id])
+
+  @@index([userId])
+}
+
+model RevenueSplit {
+  id              String   @id @default(cuid())
+  userId          String
+  releaseId       String
+  collaborators   Json     // [{ name, role, email, splitPercent }]
+  totalRevenue    Float    @default(0)
+  status          String   @default("active")
+  manifestPayoutIds Json?  // Manifest Financials payout IDs
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  release         Release  @relation(fields: [releaseId], references: [id])
+
+  @@index([userId])
+}
+
+// ─── FAN CRM & CAMPAIGNS ────────────────────────────────────
+
+model Subscriber {
+  id          String   @id @default(cuid())
+  userId      String
+  email       String
+  name        String?
+  phone       String?
+  source      String?  // "website", "smart-link", "campaign", "truefans_connect", "ghl"
+  status      String   @default("active")
+  engagementScore Int  @default(50)
+  tags        Json?
+  ghlContactId String? // GoHighLevel contact ID
+  connectFanId String? // TrueFans CONNECT fan ID
+  createdAt   DateTime @default(now())
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, email])
+  @@index([userId])
+}
+
+model FanCampaign {
+  id          String   @id @default(cuid())
+  userId      String
+  title       String
+  description String?
+  goalAmount  Float
+  raisedAmount Float   @default(0)
+  backerCount Int      @default(0)
+  tiers       Json     // [{ name, price, description, maxClaims, claimed }]
+  status      String   @default("active")
+  endsAt      DateTime
+  manifestCampaignId String? // Manifest Financials campaign ID
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// ─── SOCIAL MEDIA SCHEDULING ─────────────────────────────────
+
+model ScheduledPost {
+  id          String   @id @default(cuid())
+  userId      String
+  platforms   Json     // ["instagram", "tiktok", "twitter"]
+  content     String
+  mediaUrl    String?
+  scheduledAt DateTime
+  postedAt    DateTime?
+  status      PostStatus @default(SCHEDULED)
+  engagement  Json?    // { likes, comments, shares, views }
+  externalIds Json?    // { instagram: id, tiktok: id }
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, scheduledAt])
+}
+
+enum PostStatus {
+  SCHEDULED
+  POSTING
+  POSTED
+  FAILED
+}
+
+// ─── AI FEATURES ─────────────────────────────────────────────
+
+model AIConversation {
+  id          String   @id @default(cuid())
+  userId      String
+  messages    Json     // [{ role, content, timestamp }]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Storyboard {
+  id          String   @id @default(cuid())
+  userId      String
+  trackTitle  String
+  style       String
+  scenes      Json     // [{ time, shot, description, visual }]
+  colorPalette Json?
+  mood        String?
+  createdAt   DateTime @default(now())
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Contract {
+  id          String   @id @default(cuid())
+  userId      String
+  fileName    String
+  fileUrl     String
+  pages       Int      @default(0)
+  overallRisk String?
+  clauses     Json?    // [{ title, risk, summary, detail, recommendation }]
+  status      String   @default("processing")
+  createdAt   DateTime @default(now())
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// ─── GIGS & SHOWS ────────────────────────────────────────────
+
+model Gig {
+  id          String   @id @default(cuid())
+  userId      String
+  venue       String
+  city        String
+  country     String
+  date        DateTime
+  time        String?
+  capacity    Int?
+  ticketsSold Int      @default(0)
+  revenue     Float    @default(0)
+  status      String   @default("announced")
+  setlist     Json?
+  merch       Json?
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// ─── QUICK CAPTURE ───────────────────────────────────────────
+
+model QuickCapture {
+  id          String   @id @default(cuid())
+  userId      String
+  type        String   // "note", "lyric", "contact", "task", "link"
+  title       String?
+  content     String
+  tags        Json?
+  priority    String   @default("medium")
+  archived    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// ─── NOTIFICATIONS ───────────────────────────────────────────
+
+model Notification {
+  id          String   @id @default(cuid())
+  userId      String
+  title       String
+  description String
+  type        String   // "release", "analytics", "task", "system"
+  read        Boolean  @default(false)
+  link        String?
+  createdAt   DateTime @default(now())
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read])
+}
+
+// ─── CONNECTED ACCOUNTS ──────────────────────────────────────
+
+model ConnectedAccount {
+  id            String   @id @default(cuid())
+  userId        String
+  platform      String   // "spotify", "apple_music", "youtube", "tiktok", "truefans_connect"
+  externalId    String?
+  accessToken   String?
+  refreshToken  String?
+  tokenExpiry   DateTime?
+  username      String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, platform])
+  @@index([userId])
+}
+
+// ─── COLLABORATION ROOMS ─────────────────────────────────────
+
+model CollabRoom {
+  id          String   @id @default(cuid())
+  userId      String
+  name        String
+  track       String?
+  status      String   @default("active")
+  members     Json     // [{ name, role, email, avatar, online }]
+  versions    Json?    // [{ name, date, votes }]
+  comments    Json?    // [{ author, text, time, timestamp }]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}

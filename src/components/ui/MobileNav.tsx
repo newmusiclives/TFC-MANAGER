@@ -1,0 +1,228 @@
+"use client";
+
+import { useState } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import {
+  Menu,
+  X,
+  LayoutDashboard,
+  Music2,
+  BarChart3,
+  Link2,
+  Globe,
+  FileText,
+  Sparkles,
+  Image,
+  Lock,
+  FileSearch,
+  Settings,
+  LogOut,
+  MessageCircle,
+  MapPin,
+  FlaskConical,
+  Film,
+  Trophy,
+  Users,
+  DollarSign,
+  Radar,
+  Package,
+  Heart,
+  CalendarDays,
+  Mail,
+  Bell,
+  FileBarChart,
+  AudioWaveform,
+  Share2,
+  Wallet,
+  LinkIcon,
+  Truck,
+  Mic2,
+  Lightbulb,
+  Target,
+} from "lucide-react";
+
+type NavSection = {
+  title: string;
+  items: { label: string; href: string; icon: React.ElementType; badge?: string }[];
+};
+
+const navSections: NavSection[] = [
+  {
+    title: "Core",
+    items: [
+      { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+      { label: "AI Manager", href: "/dashboard/ai-manager", icon: MessageCircle, badge: "AI" },
+      { label: "Weekly Report", href: "/dashboard/weekly-report", icon: FileBarChart, badge: "AI" },
+      { label: "Artist Profile", href: "/artist", icon: Music2 },
+      { label: "Calendar", href: "/dashboard/calendar", icon: CalendarDays },
+      { label: "Notifications", href: "/dashboard/notifications", icon: Bell },
+      { label: "Quick Capture", href: "/dashboard/quick-capture", icon: Lightbulb },
+    ],
+  },
+  {
+    title: "Release Tools",
+    items: [
+      { label: "Release Plans", href: "/dashboard/release-plans", icon: FileText },
+      { label: "Release Simulator", href: "/dashboard/release-simulator", icon: FlaskConical, badge: "AI" },
+      { label: "Release Kit", href: "/dashboard/release-kit", icon: Package },
+      { label: "Distribution", href: "/dashboard/distribution", icon: Truck },
+      { label: "Smart Links", href: "/dashboard/smart-links", icon: Link2 },
+      { label: "Listening Links", href: "/dashboard/listening-links", icon: Lock },
+    ],
+  },
+  {
+    title: "Create",
+    items: [
+      { label: "Content Generator", href: "/dashboard/content-generator", icon: Sparkles, badge: "AI" },
+      { label: "Social Scheduler", href: "/dashboard/social-scheduler", icon: Share2 },
+      { label: "Banner Creator", href: "/dashboard/banner-creator", icon: Image },
+      { label: "Video Storyboard", href: "/dashboard/storyboard", icon: Film, badge: "AI" },
+      { label: "Website / EPK", href: "/dashboard/website", icon: Globe },
+      { label: "Link-in-Bio", href: "/dashboard/link-in-bio", icon: LinkIcon },
+    ],
+  },
+  {
+    title: "Intelligence",
+    items: [
+      { label: "Analytics", href: "/dashboard/analytics", icon: BarChart3 },
+      { label: "Sound Analysis", href: "/dashboard/sound-analysis", icon: AudioWaveform, badge: "AI" },
+      { label: "Fan Heatmap", href: "/dashboard/fan-heatmap", icon: MapPin },
+      { label: "Career Path", href: "/dashboard/career-path", icon: Trophy },
+      { label: "Trends Radar", href: "/dashboard/trends-radar", icon: Radar },
+      { label: "Competitive Intel", href: "/dashboard/competitive-intel", icon: Target, badge: "AI" },
+    ],
+  },
+  {
+    title: "Business",
+    items: [
+      { label: "Earnings", href: "/dashboard/earnings", icon: Wallet },
+      { label: "Fan CRM", href: "/dashboard/fan-crm", icon: Mail },
+      { label: "Fan Funding", href: "/dashboard/fan-funding", icon: Heart },
+      { label: "Revenue Splits", href: "/dashboard/revenue-splits", icon: DollarSign },
+      { label: "Collab Rooms", href: "/dashboard/collab-rooms", icon: Users },
+      { label: "Gigs & Shows", href: "/dashboard/gigs", icon: Mic2 },
+      { label: "Contract Analysis", href: "/dashboard/contracts", icon: FileSearch, badge: "AI" },
+    ],
+  },
+];
+
+export default function MobileNav() {
+  const [open, setOpen] = useState(false);
+  const pathname = usePathname();
+
+  const close = () => setOpen(false);
+
+  return (
+    <>
+      {/* Hamburger button — visible only below lg breakpoint */}
+      <button
+        onClick={() => setOpen(true)}
+        aria-label="Open navigation menu"
+        className="fixed top-3 left-3 z-50 lg:hidden w-10 h-10 flex items-center justify-center rounded-lg bg-gray-900 text-white shadow-lg hover:bg-gray-800 transition-colors"
+      >
+        <Menu size={22} />
+      </button>
+
+      {/* Backdrop */}
+      {open && (
+        <div
+          className="fixed inset-0 z-50 bg-black/50 lg:hidden"
+          onClick={close}
+        />
+      )}
+
+      {/* Slide-in panel */}
+      <div
+        className={`fixed top-0 left-0 h-full w-72 bg-gray-950 text-white z-50 flex flex-col transition-transform duration-300 ease-in-out lg:hidden ${
+          open ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between h-14 px-4 border-b border-gray-800">
+          <Link href="/" className="flex items-center gap-2" onClick={close}>
+            <div className="w-7 h-7 bg-[var(--primary)] rounded-md flex items-center justify-center">
+              <span className="text-white font-bold text-xs">TF</span>
+            </div>
+            <span className="font-bold text-base tracking-tight">
+              TrueFans<span className="text-[var(--primary)]"> Manager</span>
+            </span>
+          </Link>
+          <button
+            onClick={close}
+            aria-label="Close navigation menu"
+            className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-white hover:bg-gray-800 transition-colors"
+          >
+            <X size={20} />
+          </button>
+        </div>
+
+        {/* Nav sections */}
+        <nav className="flex-1 py-1 px-2 overflow-y-auto">
+          {navSections.map((section) => (
+            <div key={section.title} className="mb-2">
+              <div className="px-3 py-1 text-xs font-bold uppercase tracking-widest text-gray-600">
+                {section.title}
+              </div>
+              <div className="space-y-px">
+                {section.items.map((item) => {
+                  const isActive = pathname === item.href;
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={close}
+                      className={`flex items-center gap-2.5 px-2.5 py-[7px] rounded-lg text-sm font-medium transition-colors ${
+                        isActive
+                          ? "bg-[var(--primary)] text-white"
+                          : "text-gray-400 hover:text-white hover:bg-gray-800/60"
+                      }`}
+                    >
+                      <item.icon size={16} className="shrink-0" />
+                      <span className="flex-1 truncate">{item.label}</span>
+                      {item.badge && (
+                        <span
+                          className={`text-xs font-bold px-1.5 py-0.5 rounded-full leading-none ${
+                            item.badge === "AI"
+                              ? "bg-purple-500/20 text-purple-300"
+                              : "bg-[var(--primary)]/20 text-[var(--primary)]"
+                          }`}
+                        >
+                          {item.badge}
+                        </span>
+                      )}
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </nav>
+
+        {/* Bottom: Settings & Sign out */}
+        <div className="border-t border-gray-800 p-2 space-y-px">
+          <Link
+            href="/dashboard/settings"
+            onClick={close}
+            className={`flex items-center gap-2.5 px-2.5 py-[7px] rounded-lg text-sm font-medium transition-colors ${
+              pathname === "/dashboard/settings"
+                ? "bg-[var(--primary)] text-white"
+                : "text-gray-400 hover:text-white hover:bg-gray-800"
+            }`}
+          >
+            <Settings size={16} className="shrink-0" />
+            <span>Settings</span>
+          </Link>
+          <Link
+            href="/"
+            onClick={close}
+            className="flex items-center gap-2.5 px-2.5 py-[7px] rounded-lg text-sm font-medium text-gray-400 hover:text-red-400 hover:bg-gray-800 transition-colors"
+          >
+            <LogOut size={16} className="shrink-0" />
+            <span>Sign out</span>
+          </Link>
+        </div>
+      </div>
+    </>
+  );
+}
