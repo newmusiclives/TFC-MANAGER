@@ -15,6 +15,14 @@ import {
   Hash,
   Wand2,
   BookOpen,
+  Repeat2,
+  CalendarPlus,
+  Palette,
+  Edit3,
+  MessageCircle,
+  Camera,
+  FileText,
+  Video,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -165,6 +173,8 @@ export default function ContentGeneratorPage() {
                       <option value="professional">Professional</option>
                       <option value="casual">Casual & Fun</option>
                       <option value="mysterious">Mysterious & Intriguing</option>
+                      <option value="storytelling">Storytelling</option>
+                      <option value="provocative">Provocative & Bold</option>
                     </select>
                   </div>
                   <div>
@@ -208,6 +218,26 @@ export default function ContentGeneratorPage() {
                   )}
                   {generating ? "Generating..." : "Generate Content"}
                 </button>
+              </div>
+              {/* Brand Voice */}
+              <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-2xl border border-purple-100 p-5">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <Palette size={16} className="text-purple-600" />
+                    <h2 className="font-bold text-sm text-purple-900">Brand Voice</h2>
+                  </div>
+                  <button className="text-xs text-purple-600 hover:underline flex items-center gap-1">
+                    <Edit3 size={12} /> Edit
+                  </button>
+                </div>
+                <p className="text-sm text-purple-800">
+                  Electronic/indie-pop influenced, authentic, fan-first. Blend of introspective storytelling with upbeat energy.
+                </p>
+                <div className="flex flex-wrap gap-1.5 mt-3">
+                  {["Authentic", "Dreamy", "Fan-first", "Indie"].map((tag) => (
+                    <span key={tag} className="text-xs bg-white/70 text-purple-700 px-2 py-0.5 rounded-full font-medium">{tag}</span>
+                  ))}
+                </div>
               </div>
             </div>
 
@@ -263,26 +293,61 @@ export default function ContentGeneratorPage() {
                         <span className="text-xs font-semibold text-[var(--primary)] bg-[var(--primary)]/10 px-2.5 py-0.5 rounded-full">
                           Option {idx + 1}
                         </span>
-                        <button
-                          onClick={() => handleCopy(text, idx)}
-                          className="inline-flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-700 bg-gray-50 hover:bg-gray-100 px-3 py-1.5 rounded-lg transition-colors"
-                        >
-                          {copied === idx ? (
-                            <>
-                              <CheckCircle2 size={12} className="text-green-600" /> Copied
-                            </>
-                          ) : (
-                            <>
-                              <Copy size={12} /> Copy
-                            </>
-                          )}
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <a
+                            href="/dashboard/social-scheduler"
+                            className="inline-flex items-center gap-1.5 text-xs text-purple-600 hover:text-purple-700 bg-purple-50 hover:bg-purple-100 px-3 py-1.5 rounded-lg transition-colors"
+                          >
+                            <CalendarPlus size={12} /> Schedule
+                          </a>
+                          <button
+                            onClick={() => handleCopy(text, idx)}
+                            className="inline-flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-700 bg-gray-50 hover:bg-gray-100 px-3 py-1.5 rounded-lg transition-colors"
+                          >
+                            {copied === idx ? (
+                              <>
+                                <CheckCircle2 size={12} className="text-green-600" /> Copied
+                              </>
+                            ) : (
+                              <>
+                                <Copy size={12} /> Copy
+                              </>
+                            )}
+                          </button>
+                        </div>
                       </div>
                       <pre className="text-sm text-gray-700 whitespace-pre-wrap font-sans leading-relaxed">
                         {text}
                       </pre>
                     </div>
                   ))}
+
+                  {/* Content Repurposing Panel */}
+                  <div className="bg-white rounded-2xl border border-gray-100 p-6">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Repeat2 size={18} className="text-[var(--primary)]" />
+                      <h3 className="font-bold text-sm">Repurpose This Content</h3>
+                    </div>
+                    <p className="text-xs text-gray-500 mb-4">Transform your generated content into different formats</p>
+                    <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                      {[
+                        { label: "Tweet Thread", icon: MessageCircle },
+                        { label: "Instagram Caption", icon: Camera },
+                        { label: "Email Newsletter", icon: Mail },
+                        { label: "Blog Post", icon: FileText },
+                        { label: "TikTok Script", icon: Video },
+                      ].map((format) => (
+                        <button
+                          key={format.label}
+                          onClick={handleGenerate}
+                          className="flex flex-col items-center gap-2 px-3 py-4 bg-gray-50 hover:bg-[var(--primary)]/5 border border-gray-100 hover:border-[var(--primary)]/20 rounded-xl transition-colors text-center"
+                        >
+                          <format.icon size={18} className="text-gray-500" />
+                          <span className="text-xs font-medium text-gray-700">{format.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               )}
             </div>

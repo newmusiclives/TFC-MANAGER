@@ -320,6 +320,152 @@ export async function refreshSpotifyToken(refreshToken: string) {
 }
 
 // ---------------------------------------------------------------------------
+// detectAnomalies
+// ---------------------------------------------------------------------------
+
+export async function detectAnomalies(
+  userId: string
+): Promise<
+  {
+    type: string;
+    metric: string;
+    previousValue: number;
+    currentValue: number;
+    changePercent: number;
+    severity: "low" | "medium" | "high";
+    message: string;
+  }[]
+> {
+  // Fetch last two snapshots
+  const snapshots = await prisma.analyticsSnapshot.findMany({
+    where: { userId },
+    orderBy: { date: "desc" },
+    take: 2,
+  });
+
+  if (snapshots.length < 2) {
+    return [];
+  }
+
+  const [current, previous] = snapshots;
+  const anomalies: {
+    type: string;
+    metric: string;
+    previousValue: number;
+    currentValue: number;
+    changePercent: number;
+    severity: "low" | "medium" | "high";
+    message: string;
+  }[] = [];
+
+  const metrics: {
+    key: keyof typeof current;
+    label: string;
+    dropThreshold: number;
+    spikeThreshold: number;
+  }[] = [
+    { key: "totalStreams", label: "Total Streams", dropThreshold: -20, spikeThreshold: 50 },
+    { key: "monthlyListeners", label: "Monthly Listeners", dropThreshold: -15, spikeThreshold: 40 },
+    { key: "followers", label: "Followers", dropThreshold: -10, spikeThreshold: 100 },
+    { key: "saveRate", label: "Save Rate", dropThreshold: -25, spikeThreshold: 30 },
+  ];
+
+  for (const m of metrics) {
+    const prev = (previous[m.key] as number) || 0;
+    const curr = (current[m.key] as number) || 0;
+
+    if (prev === 0) continue;
+
+    const changePercent = ((curr - prev) / prev) * 100;
+
+    if (changePercent <= m.dropThreshold) {
+      anomalies.push({
+        type: "drop",
+        metric: m.label,
+        previousValue: prev,
+        currentValue: curr,
+        changePercent: Math.round(changePercent * 10) / 10,
+        severity: changePercent <= m.dropThreshold * 2 ? "high" : "medium",
+        message: `${m.label} dropped ${Math.abs(Math.round(changePercent))}% from ${prev.toLocaleString()} to ${curr.toLocaleString()}`,
+      });
+    } else if (changePercent >= m.spikeThreshold) {
+      anomalies.push({
+        type: "spike",
+        metric: m.label,
+        previousValue: prev,
+        currentValue: curr,
+        changePercent: Math.round(changePercent * 10) / 10,
+        severity: changePercent >= m.spikeThreshold * 2 ? "high" : "low",
+        message: `${m.label} spiked ${Math.round(changePercent)}% from ${prev.toLocaleString()} to ${curr.toLocaleString()}`,
+      });
+    }
+  }
+
+  return anomalies;
+}
+
+// ---------------------------------------------------------------------------
+// getPlaylistPlacements (mock)
+// ---------------------------------------------------------------------------
+
+export async function getPlaylistPlacements(
+  accessToken: string
+): Promise<
+  {
+    playlistName: string;
+    playlistId: string;
+    curator: string;
+    followers: number;
+    streamsFromPlaylist: number;
+    dateAdded: string;
+    position: number;
+    isEditorial: boolean;
+  }[]
+> {
+  // In production, query Spotify API for playlist appearances
+  if (!accessToken || accessToken === "mock") {
+    return [
+      { playlistName: "Indie Chill Vibes", playlistId: "pl_01", curator: "Spotify Editorial", followers: 182000, streamsFromPlaylist: 12400, dateAdded: "2026-03-01", position: 14, isEditorial: true },
+      { playlistName: "Dreamy Electronica", playlistId: "pl_02", curator: "Alex Rivera", followers: 67400, streamsFromPlaylist: 5800, dateAdded: "2026-02-20", position: 3, isEditorial: false },
+      { playlistName: "Fresh Finds: Indie", playlistId: "pl_03", curator: "Spotify Editorial", followers: 256000, streamsFromPlaylist: 18200, dateAdded: "2026-02-10", position: 8, isEditorial: true },
+      { playlistName: "Late Night Drives", playlistId: "pl_04", curator: "Sofia Andersson", followers: 124000, streamsFromPlaylist: 9100, dateAdded: "2026-01-15", position: 22, isEditorial: false },
+      { playlistName: "Synth Pop Rising", playlistId: "pl_05", curator: "Yuki Tanaka", followers: 43100, streamsFromPlaylist: 3200, dateAdded: "2026-01-05", position: 7, isEditorial: false },
+      { playlistName: "New Music Friday", playlistId: "pl_06", curator: "Spotify Editorial", followers: 4200000, streamsFromPlaylist: 45600, dateAdded: "2025-12-20", position: 42, isEditorial: true },
+    ];
+  }
+
+  // Real implementation would call Spotify API
+  return [];
+}
+
+// ---------------------------------------------------------------------------
+// getListenerCohorts (mock)
+// ---------------------------------------------------------------------------
+
+export async function getListenerCohorts(
+  userId: string
+): Promise<
+  {
+    cohortMonth: string;
+    listenersGained: number;
+    retentionRate: number;
+    avgStreamsPerListener: number;
+    topSource: string;
+  }[]
+> {
+  // In production, aggregate from analytics snapshots
+  void userId;
+  return [
+    { cohortMonth: "2025-10", listenersGained: 1200, retentionRate: 68, avgStreamsPerListener: 8.2, topSource: "Discover Weekly" },
+    { cohortMonth: "2025-11", listenersGained: 1850, retentionRate: 72, avgStreamsPerListener: 9.1, topSource: "Release Radar" },
+    { cohortMonth: "2025-12", listenersGained: 3200, retentionRate: 65, avgStreamsPerListener: 7.4, topSource: "New Music Friday" },
+    { cohortMonth: "2026-01", listenersGained: 2400, retentionRate: 78, avgStreamsPerListener: 10.3, topSource: "User Playlists" },
+    { cohortMonth: "2026-02", listenersGained: 2100, retentionRate: 81, avgStreamsPerListener: 11.5, topSource: "Radio" },
+    { cohortMonth: "2026-03", listenersGained: 2800, retentionRate: 74, avgStreamsPerListener: 6.8, topSource: "Search" },
+  ];
+}
+
+// ---------------------------------------------------------------------------
 // aggregateStats
 // ---------------------------------------------------------------------------
 

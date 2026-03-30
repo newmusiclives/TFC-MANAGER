@@ -307,7 +307,7 @@ export default function SettingsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-bold text-gray-900">TrueFans Manager Pro</span>
+                    <span className="text-sm font-bold text-gray-900">TrueFans MANAGER Pro</span>
                     <span className="text-xs font-bold bg-[var(--primary)] text-white px-2 py-0.5 rounded-full">
                       ACTIVE
                     </span>
@@ -336,7 +336,7 @@ export default function SettingsPage() {
                     Link your active TrueFans CONNECT account to get <strong>Pro for free</strong>
                   </p>
                   <p className="text-xs text-gray-500 mt-0.5">
-                    Artists with an active TrueFans CONNECT subscription at truefansconnect.com get TrueFans Manager Pro at no extra charge.
+                    Artists with an active TrueFans CONNECT subscription at truefansconnect.com get TrueFans MANAGER Pro at no extra charge.
                   </p>
                 </div>
                 <a

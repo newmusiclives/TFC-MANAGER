@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getUserFromRequest } from "@/lib/services/auth-service";
+import { validateSmartLink } from "@/lib/validation";
 
 // ---------------------------------------------------------------------------
 // GET /api/smart-links — List user's smart links with click/view counts
@@ -41,11 +42,18 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { title, slug, releaseId, platformLinks } = body;
+    const { releaseId } = body;
 
-    if (!title || !slug || !platformLinks) {
+    const validation = validateSmartLink(body);
+    if (!validation.success) {
+      return NextResponse.json({ error: validation.error }, { status: 400 });
+    }
+
+    const { title, slug, platformLinks } = validation.data;
+
+    if (!platformLinks) {
       return NextResponse.json(
-        { error: "title, slug, and platformLinks are required" },
+        { error: "platformLinks are required" },
         { status: 400 }
       );
     }

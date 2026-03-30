@@ -134,7 +134,7 @@ export default function SignIn() {
         </div>
 
         <p className="text-gray-600 text-sm">
-          &copy; {new Date().getFullYear()} TrueFans Manager
+          &copy; {new Date().getFullYear()} TrueFans MANAGER
         </p>
       </div>
 

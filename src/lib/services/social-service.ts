@@ -306,6 +306,179 @@ export async function processScheduledPosts() {
 }
 
 // ---------------------------------------------------------------------------
+// Optimal Post Times
+// ---------------------------------------------------------------------------
+
+export function getOptimalPostTime(
+  platform: string,
+  timezone: string = "America/New_York"
+): { start: string; end: string; day: string; note: string } {
+  const times: Record<
+    string,
+    { start: string; end: string; day: string; note: string }
+  > = {
+    instagram: {
+      start: "11:00 AM",
+      end: "1:00 PM",
+      day: "Tuesday-Thursday",
+      note: "Lunchtime posts see 2-3x higher engagement. Reels perform best at 9 AM and 12 PM.",
+    },
+    tiktok: {
+      start: "7:00 PM",
+      end: "9:00 PM",
+      day: "Tuesday, Thursday, Friday",
+      note: "Evening posts catch peak scroll time. Trending sounds perform best posted 6-10 PM.",
+    },
+    twitter: {
+      start: "9:00 AM",
+      end: "12:00 PM",
+      day: "Monday-Wednesday",
+      note: "Morning tweets get more retweets. Threads perform best mid-morning on weekdays.",
+    },
+    facebook: {
+      start: "1:00 PM",
+      end: "4:00 PM",
+      day: "Wednesday-Friday",
+      note: "Early afternoon sees peak Facebook activity. Video posts get 6x more engagement.",
+    },
+    youtube: {
+      start: "2:00 PM",
+      end: "4:00 PM",
+      day: "Thursday-Saturday",
+      note: "Upload 2-3 hours before peak viewing. Weekend mornings also work well for music content.",
+    },
+  };
+
+  const result = times[platform.toLowerCase()] || {
+    start: "10:00 AM",
+    end: "2:00 PM",
+    day: "Weekdays",
+    note: "General best practice for social media posting.",
+  };
+
+  return { ...result, note: `${result.note} (${timezone})` };
+}
+
+// ---------------------------------------------------------------------------
+// Hashtag Generation
+// ---------------------------------------------------------------------------
+
+export function generateHashtags(
+  genre: string,
+  mood: string
+): string[] {
+  const genreHashtags: Record<string, string[]> = {
+    pop: ["#pop", "#popmusic", "#newpop", "#popsong", "#popartist", "#electropop", "#indipop"],
+    "indie": ["#indie", "#indiemusic", "#indieartist", "#indierock", "#indiepop", "#indiefolk", "#independentmusic"],
+    "hip-hop": ["#hiphop", "#hiphopmusic", "#rap", "#rapper", "#bars", "#trap", "#undergroundhiphop"],
+    "r&b": ["#rnb", "#rnbmusic", "#rnbsinger", "#rnbsoul", "#newrnb", "#contemporaryrnb"],
+    electronic: ["#electronic", "#electronicmusic", "#edm", "#synth", "#techno", "#house", "#producer"],
+    rock: ["#rock", "#rockmusic", "#newrock", "#alternativerock", "#indierock", "#rockband"],
+    folk: ["#folk", "#folkmusic", "#acoustic", "#folkartist", "#singersongwriter", "#americana"],
+    jazz: ["#jazz", "#jazzmusic", "#smoothjazz", "#jazzartist", "#nujazz", "#contemporaryjazz"],
+    country: ["#country", "#countrymusic", "#newcountry", "#countryartist", "#americana", "#countrysinger"],
+    latin: ["#latin", "#latinmusic", "#reggaeton", "#latinpop", "#musicalatina", "#urbano"],
+    metal: ["#metal", "#metalmusic", "#heavymetal", "#metalcore", "#metalband", "#metalhead"],
+    classical: ["#classical", "#classicalmusic", "#orchestra", "#composer", "#neoclassical", "#piano"],
+  };
+
+  const moodHashtags: Record<string, string[]> = {
+    happy: ["#goodvibes", "#feelgood", "#upbeat", "#positive", "#sunshine"],
+    sad: ["#emotional", "#melancholy", "#sadmusic", "#feels", "#heartbreak"],
+    energetic: ["#energy", "#hype", "#bangers", "#turnedup", "#workout"],
+    chill: ["#chill", "#chillvibes", "#lofi", "#relaxing", "#mellow"],
+    dark: ["#dark", "#moody", "#atmospheric", "#cinematic", "#intense"],
+    romantic: ["#love", "#lovesong", "#romantic", "#romance", "#soulmate"],
+    nostalgic: ["#nostalgic", "#throwback", "#vibes", "#memories", "#bittersweet"],
+  };
+
+  const baseHashtags = ["#newmusic", "#music", "#artist", "#songwriter", "#nowplaying", "#musicislife"];
+  const genreTags = genreHashtags[genre.toLowerCase()] || ["#music", "#newrelease"];
+  const moodTags = moodHashtags[mood.toLowerCase()] || ["#vibes"];
+
+  return [...new Set([...baseHashtags, ...genreTags, ...moodTags])];
+}
+
+// ---------------------------------------------------------------------------
+// Engagement Benchmarks
+// ---------------------------------------------------------------------------
+
+export function getEngagementBenchmarks(
+  platform: string
+): {
+  avgEngagementRate: number;
+  avgLikes: number;
+  avgComments: number;
+  avgShares: number;
+  avgViews: number;
+  note: string;
+} {
+  const benchmarks: Record<
+    string,
+    {
+      avgEngagementRate: number;
+      avgLikes: number;
+      avgComments: number;
+      avgShares: number;
+      avgViews: number;
+      note: string;
+    }
+  > = {
+    instagram: {
+      avgEngagementRate: 3.5,
+      avgLikes: 150,
+      avgComments: 12,
+      avgShares: 8,
+      avgViews: 2000,
+      note: "Music accounts avg 3-5% engagement. Reels get 2x the reach of static posts.",
+    },
+    tiktok: {
+      avgEngagementRate: 5.7,
+      avgLikes: 320,
+      avgComments: 25,
+      avgShares: 40,
+      avgViews: 8000,
+      note: "TikTok has the highest organic reach. Videos under 30s perform best for music.",
+    },
+    twitter: {
+      avgEngagementRate: 1.8,
+      avgLikes: 45,
+      avgComments: 8,
+      avgShares: 15,
+      avgViews: 1200,
+      note: "Thread posts outperform single tweets by 3x. Use audio snippets for engagement.",
+    },
+    facebook: {
+      avgEngagementRate: 2.1,
+      avgLikes: 80,
+      avgComments: 10,
+      avgShares: 12,
+      avgViews: 1500,
+      note: "Video content dominates Facebook. Live performances get highest engagement.",
+    },
+    youtube: {
+      avgEngagementRate: 4.2,
+      avgLikes: 200,
+      avgComments: 30,
+      avgShares: 20,
+      avgViews: 5000,
+      note: "Shorts are growing fast. Music videos avg 4-6% engagement for indie artists.",
+    },
+  };
+
+  return (
+    benchmarks[platform.toLowerCase()] || {
+      avgEngagementRate: 3.0,
+      avgLikes: 100,
+      avgComments: 15,
+      avgShares: 10,
+      avgViews: 2000,
+      note: "Average benchmarks across all platforms.",
+    }
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Analytics
 // ---------------------------------------------------------------------------
 

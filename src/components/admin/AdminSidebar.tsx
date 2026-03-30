@@ -36,7 +36,7 @@ export default function AdminSidebar() {
           <Shield size={16} />
         </div>
         <div>
-          <span className="font-bold text-sm tracking-tight">TrueFans Manager</span>
+          <span className="font-bold text-sm tracking-tight">TrueFans MANAGER</span>
           <span className="block text-xs text-red-400 font-semibold uppercase tracking-widest">
             Admin Panel
           </span>

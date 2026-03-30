@@ -33,6 +33,8 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
+import { useState, useEffect } from "react";
+import { apiGet } from "@/lib/api-client";
 
 const yourPosition = {
   you: { listeners: "18.2K", streams: "128.5K", saveRate: "24.3%", releases: 12 },
@@ -181,6 +183,35 @@ const highlightColors: Record<string, string> = {
 };
 
 export default function CompetitiveIntelPage() {
+  const [data, setData] = useState({
+    yourPosition,
+    similarArtists,
+    playlistGapAnalysis,
+    strategyInsights,
+    growthData,
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    apiGet<typeof data>("/api/competitive-intel")
+      .then((d) => {
+        if (d.yourPosition) setData(d);
+      })
+      .catch(() => {/* keep mock data */})
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen bg-gray-50">
+        <DashboardSidebar />
+        <main className="flex-1 lg:ml-64 flex items-center justify-center">
+          <div className="animate-spin w-8 h-8 border-4 border-[var(--primary)] border-t-transparent rounded-full" />
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-h-screen bg-gray-50">
       <DashboardSidebar />
@@ -213,10 +244,10 @@ export default function CompetitiveIntelPage() {
 
             <div className="grid grid-cols-4 gap-4 mb-5">
               {[
-                { label: "Monthly Listeners", you: yourPosition.you.listeners, avg: yourPosition.average.listeners, youBetter: false },
-                { label: "Total Streams", you: yourPosition.you.streams, avg: yourPosition.average.streams, youBetter: false },
-                { label: "Save Rate", you: yourPosition.you.saveRate, avg: yourPosition.average.saveRate, youBetter: true },
-                { label: "Releases", you: String(yourPosition.you.releases), avg: String(yourPosition.average.releases), youBetter: false },
+                { label: "Monthly Listeners", you: data.yourPosition.you.listeners, avg: data.yourPosition.average.listeners, youBetter: false },
+                { label: "Total Streams", you: data.yourPosition.you.streams, avg: data.yourPosition.average.streams, youBetter: false },
+                { label: "Save Rate", you: data.yourPosition.you.saveRate, avg: data.yourPosition.average.saveRate, youBetter: true },
+                { label: "Releases", you: String(data.yourPosition.you.releases), avg: String(data.yourPosition.average.releases), youBetter: false },
               ].map((metric) => (
                 <div key={metric.label} className="bg-gray-50 rounded-xl p-4">
                   <div className="text-xs text-gray-500 mb-2">{metric.label}</div>
@@ -267,7 +298,7 @@ export default function CompetitiveIntelPage() {
             <p className="text-sm text-gray-500 mb-5">Auto-detected from your sound, genre, and audience overlap</p>
 
             <div className="space-y-4">
-              {similarArtists.map((artist) => (
+              {data.similarArtists.map((artist) => (
                 <div
                   key={artist.name}
                   className={`rounded-xl border p-5 transition-all hover:shadow-md ${highlightColors[artist.highlight] || "border-gray-100"}`}
@@ -332,7 +363,7 @@ export default function CompetitiveIntelPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {playlistGapAnalysis.map((pl) => (
+                  {data.playlistGapAnalysis.map((pl) => (
                     <tr key={pl.name} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-2">
@@ -382,8 +413,9 @@ export default function CompetitiveIntelPage() {
             <p className="text-sm text-gray-500 mb-5">AI-generated recommendations based on competitor analysis</p>
 
             <div className="space-y-3">
-              {strategyInsights.map((insight, idx) => {
-                const Icon = insight.icon;
+              {data.strategyInsights.map((insight, idx) => {
+                const insightIcons = [Disc3, Target, Zap];
+                const Icon = insight.icon || insightIcons[idx % insightIcons.length];
                 return (
                   <div key={idx} className={`${insight.bg} rounded-xl p-4 border border-gray-100`}>
                     <div className="flex items-start gap-3">
@@ -412,7 +444,7 @@ export default function CompetitiveIntelPage() {
 
             <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={growthData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                <LineChart data={data.growthData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                   <XAxis dataKey="month" tick={{ fontSize: 12, fill: "#999" }} />
                   <YAxis tick={{ fontSize: 12, fill: "#999" }} tickFormatter={(v) => `${(v / 1000).toFixed(0)}K`} />

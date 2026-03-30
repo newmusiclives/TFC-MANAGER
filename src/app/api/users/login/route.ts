@@ -1,18 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { loginUser, COOKIE_NAME } from "@/lib/services/auth-service";
+import { validateLogin } from "@/lib/validation";
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { email, password } = body;
 
-    if (!email || !password) {
-      return NextResponse.json(
-        { error: "Email and password are required" },
-        { status: 400 }
-      );
+    const validation = validateLogin(body);
+    if (!validation.success) {
+      return NextResponse.json({ error: validation.error }, { status: 400 });
     }
 
+    const { email, password } = validation.data;
     const { token, user } = await loginUser(email, password);
 
     const response = NextResponse.json({ user, token });

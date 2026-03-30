@@ -10,39 +10,58 @@ datasource db {
 // ─── AUTH & USERS ────────────────────────────────────────────
 
 model User {
-  id            String    @id @default(cuid())
-  email         String    @unique
-  passwordHash  String
-  name          String
-  artistName    String?
-  avatar        String?
-  bio           String?
-  genre         String?
-  location      String?
-  plan          Plan      @default(STARTER)
-  role          UserRole  @default(ARTIST)
-  truefansConnectId String? @unique
-  onboardingComplete Boolean @default(false)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id                 String   @id @default(cuid())
+  email              String   @unique
+  passwordHash       String
+  name               String
+  artistName         String?
+  avatar             String?
+  bio                String?
+  genre              String?
+  location           String?
+  plan               Plan     @default(STARTER)
+  role               UserRole @default(ARTIST)
+  truefansConnectId  String?  @unique
+  onboardingComplete Boolean  @default(false)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 
-  releases      Release[]
-  smartLinks    SmartLink[]
-  analytics     AnalyticsSnapshot[]
-  earnings      Earning[]
-  subscribers   Subscriber[]
-  campaigns     FanCampaign[]
-  captures      QuickCapture[]
-  gigs          Gig[]
-  contracts     Contract[]
-  collaborations CollabRoom[]
-  splits        RevenueSplit[]
-  socialPosts   ScheduledPost[]
-  notifications Notification[]
+  releases          Release[]
+  smartLinks        SmartLink[]
+  analytics         AnalyticsSnapshot[]
+  earnings          Earning[]
+  subscribers       Subscriber[]
+  campaigns         FanCampaign[]
+  captures          QuickCapture[]
+  gigs              Gig[]
+  contracts         Contract[]
+  collaborations    CollabRoom[]
+  splits            RevenueSplit[]
+  socialPosts       ScheduledPost[]
+  notifications     Notification[]
   connectedAccounts ConnectedAccount[]
-  listeningLinks ListeningLink[]
-  storyboards   Storyboard[]
-  aiConversations AIConversation[]
+  listeningLinks    ListeningLink[]
+  storyboards       Storyboard[]
+  aiConversations   AIConversation[]
+
+  // New relations
+  aiActions                AIAction[]
+  playlistPitches          PlaylistPitch[]
+  syncSubmissions          SyncSubmission[]
+  setlists                 Setlist[]
+  merchItems               MerchItem[]
+  collabProfiles           CollabProfile[]
+  collabBookingsAsClient   CollabBooking[]    @relation("CollabBookingClient")
+  collabBookingsAsProvider CollabBooking[]    @relation("CollabBookingProvider")
+  pressOutreaches          PressOutreach[]
+  audiencePersonas         AudiencePersona[]
+  adCampaigns              AdCampaign[]
+  royaltyStatements        RoyaltyStatement[]
+  opportunityAlerts        OpportunityAlert[]
+  careerDNA                CareerDNA?
+  releaseReplays           ReleaseReplay[]
+  teamMembers              TeamMember[]
+  revenueForecasts         RevenueForecast[]
 }
 
 enum Plan {
@@ -60,26 +79,30 @@ enum UserRole {
 // ─── RELEASES & DISTRIBUTION ─────────────────────────────────
 
 model Release {
-  id            String    @id @default(cuid())
-  userId        String
-  title         String
-  type          ReleaseType @default(SINGLE)
-  releaseDate   DateTime?
-  coverArtUrl   String?
-  audioUrl      String?
-  isrc          String?
-  upc           String?
-  genre         String?
-  status        ReleaseStatus @default(DRAFT)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id          String        @id @default(cuid())
+  userId      String
+  title       String
+  type        ReleaseType   @default(SINGLE)
+  releaseDate DateTime?
+  coverArtUrl String?
+  audioUrl    String?
+  isrc        String?
+  upc         String?
+  genre       String?
+  status      ReleaseStatus @default(DRAFT)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
 
-  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  distributions Distribution[]
-  smartLinks    SmartLink[]
-  releasePlan   ReleasePlan?
-  earnings      Earning[]
-  splits        RevenueSplit[]
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  distributions   Distribution[]
+  smartLinks      SmartLink[]
+  releasePlan     ReleasePlan?
+  earnings        Earning[]
+  splits          RevenueSplit[]
+  playlistPitches PlaylistPitch[]
+  syncSubmissions SyncSubmission[]
+  pressOutreaches PressOutreach[]
+  releaseReplays  ReleaseReplay[]
 
   @@index([userId])
 }
@@ -100,7 +123,7 @@ enum ReleaseStatus {
 }
 
 model Distribution {
-  id          String   @id @default(cuid())
+  id          String             @id @default(cuid())
   releaseId   String
   platform    String
   status      DistributionStatus @default(PENDING)
@@ -108,10 +131,10 @@ model Distribution {
   liveUrl     String?
   submittedAt DateTime?
   liveAt      DateTime?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
 
-  release     Release  @relation(fields: [releaseId], references: [id], onDelete: Cascade)
+  release Release @relation(fields: [releaseId], references: [id], onDelete: Cascade)
 
   @@index([releaseId])
 }
@@ -126,53 +149,54 @@ enum DistributionStatus {
 }
 
 model ReleasePlan {
-  id          String   @id @default(cuid())
-  releaseId   String   @unique
-  phases      Json     // Array of phases with tasks
-  progress    Int      @default(0)
-  status      String   @default("draft")
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        String   @id @default(cuid())
+  releaseId String   @unique
+  phases    Json // Array of phases with tasks
+  progress  Int      @default(0)
+  status    String   @default("draft")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  release     Release  @relation(fields: [releaseId], references: [id], onDelete: Cascade)
+  release Release @relation(fields: [releaseId], references: [id], onDelete: Cascade)
 }
 
 // ─── SMART LINKS & LISTENING LINKS ──────────────────────────
 
 model SmartLink {
-  id          String   @id @default(cuid())
-  userId      String
-  releaseId   String?
-  title       String
-  slug        String   @unique
-  platformLinks Json   // { spotify: url, apple: url, ... }
-  clicks      Int      @default(0)
-  views       Int      @default(0)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id            String   @id @default(cuid())
+  userId        String
+  releaseId     String?
+  title         String
+  slug          String   @unique
+  platformLinks Json // { spotify: url, apple: url, ... }
+  clicks        Int      @default(0)
+  views         Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  release     Release? @relation(fields: [releaseId], references: [id])
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  release     Release?     @relation(fields: [releaseId], references: [id])
+  adCampaigns AdCampaign[]
 
   @@index([userId])
   @@index([slug])
 }
 
 model ListeningLink {
-  id          String   @id @default(cuid())
-  userId      String
-  title       String
-  slug        String   @unique
-  audioUrl    String
-  password    String?
-  maxPlays    Int      @default(50)
-  plays       Int      @default(0)
-  expiresAt   DateTime
-  status      String   @default("active")
-  recipients  Json?    // Array of { name, email, played, playedAt }
-  createdAt   DateTime @default(now())
+  id         String   @id @default(cuid())
+  userId     String
+  title      String
+  slug       String   @unique
+  audioUrl   String
+  password   String?
+  maxPlays   Int      @default(50)
+  plays      Int      @default(0)
+  expiresAt  DateTime
+  status     String   @default("active")
+  recipients Json? // Array of { name, email, played, playedAt }
+  createdAt  DateTime @default(now())
 
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([slug])
@@ -181,19 +205,19 @@ model ListeningLink {
 // ─── ANALYTICS ───────────────────────────────────────────────
 
 model AnalyticsSnapshot {
-  id              String   @id @default(cuid())
-  userId          String
-  date            DateTime
-  totalStreams     Int      @default(0)
-  monthlyListeners Int     @default(0)
-  followers       Int      @default(0)
-  saveRate        Float    @default(0)
-  platformBreakdown Json?  // { spotify: n, apple: n, ... }
-  topCountries    Json?    // [{ country, listeners }]
-  demographics    Json?    // { age, gender }
-  createdAt       DateTime @default(now())
+  id                String   @id @default(cuid())
+  userId            String
+  date              DateTime
+  totalStreams      Int      @default(0)
+  monthlyListeners  Int      @default(0)
+  followers         Int      @default(0)
+  saveRate          Float    @default(0)
+  platformBreakdown Json? // { spotify: n, apple: n, ... }
+  topCountries      Json? // [{ country, listeners }]
+  demographics      Json? // { age, gender }
+  createdAt         DateTime @default(now())
 
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, date])
 }
@@ -201,37 +225,37 @@ model AnalyticsSnapshot {
 // ─── EARNINGS & PAYMENTS ─────────────────────────────────────
 
 model Earning {
-  id          String   @id @default(cuid())
-  userId      String
-  releaseId   String?
-  platform    String
-  amount      Float
-  currency    String   @default("USD")
-  period      String   // "2026-03"
-  paidOut     Boolean  @default(false)
-  paidAt      DateTime?
+  id           String    @id @default(cuid())
+  userId       String
+  releaseId    String?
+  platform     String
+  amount       Float
+  currency     String    @default("USD")
+  period       String // "2026-03"
+  paidOut      Boolean   @default(false)
+  paidAt       DateTime?
   manifestTxId String? // Manifest Financials transaction ID
-  createdAt   DateTime @default(now())
+  createdAt    DateTime  @default(now())
 
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  release     Release? @relation(fields: [releaseId], references: [id])
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  release Release? @relation(fields: [releaseId], references: [id])
 
   @@index([userId])
 }
 
 model RevenueSplit {
-  id              String   @id @default(cuid())
-  userId          String
-  releaseId       String
-  collaborators   Json     // [{ name, role, email, splitPercent }]
-  totalRevenue    Float    @default(0)
-  status          String   @default("active")
-  manifestPayoutIds Json?  // Manifest Financials payout IDs
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id                String   @id @default(cuid())
+  userId            String
+  releaseId         String
+  collaborators     Json // [{ name, role, email, splitPercent }]
+  totalRevenue      Float    @default(0)
+  status            String   @default("active")
+  manifestPayoutIds Json? // Manifest Financials payout IDs
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  release         Release  @relation(fields: [releaseId], references: [id])
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  release Release @relation(fields: [releaseId], references: [id])
 
   @@index([userId])
 }
@@ -239,41 +263,42 @@ model RevenueSplit {
 // ─── FAN CRM & CAMPAIGNS ────────────────────────────────────
 
 model Subscriber {
-  id          String   @id @default(cuid())
-  userId      String
-  email       String
-  name        String?
-  phone       String?
-  source      String?  // "website", "smart-link", "campaign", "truefans_connect", "ghl"
-  status      String   @default("active")
-  engagementScore Int  @default(50)
-  tags        Json?
-  ghlContactId String? // GoHighLevel contact ID
-  connectFanId String? // TrueFans CONNECT fan ID
-  createdAt   DateTime @default(now())
+  id              String   @id @default(cuid())
+  userId          String
+  email           String
+  name            String?
+  phone           String?
+  source          String? // "website", "smart-link", "campaign", "truefans_connect", "ghl"
+  status          String   @default("active")
+  engagementScore Int      @default(50)
+  tags            Json?
+  ghlContactId    String? // GoHighLevel contact ID
+  connectFanId    String? // TrueFans CONNECT fan ID
+  createdAt       DateTime @default(now())
 
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  showCheckins ShowCheckin[]
 
   @@unique([userId, email])
   @@index([userId])
 }
 
 model FanCampaign {
-  id          String   @id @default(cuid())
-  userId      String
-  title       String
-  description String?
-  goalAmount  Float
-  raisedAmount Float   @default(0)
-  backerCount Int      @default(0)
-  tiers       Json     // [{ name, price, description, maxClaims, claimed }]
-  status      String   @default("active")
-  endsAt      DateTime
+  id                 String   @id @default(cuid())
+  userId             String
+  title              String
+  description        String?
+  goalAmount         Float
+  raisedAmount       Float    @default(0)
+  backerCount        Int      @default(0)
+  tiers              Json // [{ name, price, description, maxClaims, claimed }]
+  status             String   @default("active")
+  endsAt             DateTime
   manifestCampaignId String? // Manifest Financials campaign ID
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
 }
@@ -281,20 +306,20 @@ model FanCampaign {
 // ─── SOCIAL MEDIA SCHEDULING ─────────────────────────────────
 
 model ScheduledPost {
-  id          String   @id @default(cuid())
+  id          String     @id @default(cuid())
   userId      String
-  platforms   Json     // ["instagram", "tiktok", "twitter"]
+  platforms   Json // ["instagram", "tiktok", "twitter"]
   content     String
   mediaUrl    String?
   scheduledAt DateTime
   postedAt    DateTime?
   status      PostStatus @default(SCHEDULED)
-  engagement  Json?    // { likes, comments, shares, views }
-  externalIds Json?    // { instagram: id, tiktok: id }
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  engagement  Json? // { likes, comments, shares, views }
+  externalIds Json? // { instagram: id, tiktok: id }
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
 
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, scheduledAt])
 }
@@ -309,28 +334,28 @@ enum PostStatus {
 // ─── AI FEATURES ─────────────────────────────────────────────
 
 model AIConversation {
-  id          String   @id @default(cuid())
-  userId      String
-  messages    Json     // [{ role, content, timestamp }]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        String   @id @default(cuid())
+  userId    String
+  messages  Json // [{ role, content, timestamp }]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
 }
 
 model Storyboard {
-  id          String   @id @default(cuid())
-  userId      String
-  trackTitle  String
-  style       String
-  scenes      Json     // [{ time, shot, description, visual }]
+  id           String   @id @default(cuid())
+  userId       String
+  trackTitle   String
+  style        String
+  scenes       Json // [{ time, shot, description, visual }]
   colorPalette Json?
-  mood        String?
-  createdAt   DateTime @default(now())
+  mood         String?
+  createdAt    DateTime @default(now())
 
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
 }
@@ -342,11 +367,11 @@ model Contract {
   fileUrl     String
   pages       Int      @default(0)
   overallRisk String?
-  clauses     Json?    // [{ title, risk, summary, detail, recommendation }]
+  clauses     Json? // [{ title, risk, summary, detail, recommendation }]
   status      String   @default("processing")
   createdAt   DateTime @default(now())
 
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
 }
@@ -371,7 +396,9 @@ model Gig {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  setlists     Setlist[]
+  showCheckins ShowCheckin[]
 
   @@index([userId])
 }
@@ -379,17 +406,17 @@ model Gig {
 // ─── QUICK CAPTURE ───────────────────────────────────────────
 
 model QuickCapture {
-  id          String   @id @default(cuid())
-  userId      String
-  type        String   // "note", "lyric", "contact", "task", "link"
-  title       String?
-  content     String
-  tags        Json?
-  priority    String   @default("medium")
-  archived    Boolean  @default(false)
-  createdAt   DateTime @default(now())
+  id        String   @id @default(cuid())
+  userId    String
+  type      String // "note", "lyric", "contact", "task", "link"
+  title     String?
+  content   String
+  tags      Json?
+  priority  String   @default("medium")
+  archived  Boolean  @default(false)
+  createdAt DateTime @default(now())
 
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
 }
@@ -401,12 +428,12 @@ model Notification {
   userId      String
   title       String
   description String
-  type        String   // "release", "analytics", "task", "system"
+  type        String // "release", "analytics", "task", "system"
   read        Boolean  @default(false)
   link        String?
   createdAt   DateTime @default(now())
 
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, read])
 }
@@ -414,18 +441,18 @@ model Notification {
 // ─── CONNECTED ACCOUNTS ──────────────────────────────────────
 
 model ConnectedAccount {
-  id            String   @id @default(cuid())
-  userId        String
-  platform      String   // "spotify", "apple_music", "youtube", "tiktok", "truefans_connect"
-  externalId    String?
-  accessToken   String?
-  refreshToken  String?
-  tokenExpiry   DateTime?
-  username      String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id           String    @id @default(cuid())
+  userId       String
+  platform     String // "spotify", "apple_music", "youtube", "tiktok", "truefans_connect"
+  externalId   String?
+  accessToken  String?
+  refreshToken String?
+  tokenExpiry  DateTime?
+  username     String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, platform])
   @@index([userId])
@@ -434,18 +461,514 @@ model ConnectedAccount {
 // ─── COLLABORATION ROOMS ─────────────────────────────────────
 
 model CollabRoom {
+  id        String   @id @default(cuid())
+  userId    String
+  name      String
+  track     String?
+  status    String   @default("active")
+  members   Json // [{ name, role, email, avatar, online }]
+  versions  Json? // [{ name, date, votes }]
+  comments  Json? // [{ author, text, time, timestamp }]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// ─── NEW ENUMS ──────────────────────────────────────────────
+
+enum AIActionType {
+  CONTENT_SCHEDULE
+  RELEASE_PLAN
+  EMAIL_CAMPAIGN
+  PLAYLIST_PITCH
+  ANOMALY_ALERT
+  GOAL_CHECK
+  NEGOTIATION_PREP
+}
+
+enum AIActionStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  EXECUTED
+  FAILED
+}
+
+enum PitchStatus {
+  DRAFT
+  SENT
+  OPENED
+  ACCEPTED
+  DECLINED
+  NO_RESPONSE
+}
+
+enum SyncSubmissionStatus {
+  SUBMITTED
+  UNDER_REVIEW
+  ACCEPTED
+  DECLINED
+  PLACED
+}
+
+enum CollabBookingStatus {
+  INQUIRY
+  ACCEPTED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum OutreachStatus {
+  DRAFT
+  SENT
+  OPENED
+  REPLIED
+  PUBLISHED
+  NO_RESPONSE
+}
+
+enum AdCampaignStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  COMPLETED
+}
+
+enum OpportunityStatus {
+  NEW
+  VIEWED
+  APPLIED
+  DISMISSED
+}
+
+enum TeamMemberRole {
+  MANAGER
+  LABEL_REP
+  ACCOUNTANT
+  SOCIAL_MEDIA
+  PRODUCER
+  VIEWER
+}
+
+enum InviteStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+}
+
+// ─── AI AUTOPILOT ───────────────────────────────────────────
+
+model AIAction {
+  id           String         @id @default(cuid())
+  userId       String
+  type         AIActionType
+  status       AIActionStatus @default(PENDING)
+  title        String
+  description  String
+  payload      Json
+  result       Json?
+  scheduledFor DateTime?
+  executedAt   DateTime?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// ─── PLAYLIST PITCHING ──────────────────────────────────────
+
+model PlaylistPitch {
+  id                String      @id @default(cuid())
+  userId            String
+  releaseId         String?
+  curatorName       String
+  curatorEmail      String
+  playlistName      String
+  playlistUrl       String
+  playlistFollowers Int?
+  genre             String
+  pitchMessage      String
+  status            PitchStatus @default(DRAFT)
+  sentAt            DateTime?
+  respondedAt       DateTime?
+  notes             String?
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  release Release? @relation(fields: [releaseId], references: [id])
+
+  @@index([userId])
+}
+
+model PlaylistCurator {
+  id              String    @id @default(cuid())
+  name            String
+  email           String
+  platform        String
+  playlistName    String
+  playlistUrl     String
+  followerCount   Int
+  genres          String[]
+  acceptanceRate  Float?
+  avgResponseDays Int?
+  lastContactedAt DateTime?
+  notes           String?
+  isVerified      Boolean   @default(false)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+// ─── SYNC LICENSING ─────────────────────────────────────────
+
+model SyncSubmission {
+  id               String               @id @default(cuid())
+  userId           String
+  releaseId        String?
+  libraryName      String
+  submissionUrl    String
+  genre            String
+  mood             String
+  tempo            String
+  instrumentation  String[]
+  status           SyncSubmissionStatus @default(SUBMITTED)
+  placementDetails String?
+  revenue          Float?
+  submittedAt      DateTime
+  respondedAt      DateTime?
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  release Release? @relation(fields: [releaseId], references: [id])
+
+  @@index([userId])
+}
+
+// ─── LIVE PERFORMANCE ───────────────────────────────────────
+
+model Setlist {
+  id            String   @id @default(cuid())
+  userId        String
+  gigId         String?
+  name          String
+  songs         Json // Array of { title, duration, notes, order }
+  totalDuration Int
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gig  Gig? @relation(fields: [gigId], references: [id])
+
+  @@index([userId])
+}
+
+// ─── MERCH INVENTORY ────────────────────────────────────────
+
+model MerchItem {
   id          String   @id @default(cuid())
   userId      String
   name        String
-  track       String?
-  status      String   @default("active")
-  members     Json     // [{ name, role, email, avatar, online }]
-  versions    Json?    // [{ name, date, votes }]
-  comments    Json?    // [{ author, text, time, timestamp }]
+  description String?
+  price       Float
+  costPrice   Float?
+  quantity    Int
+  imageUrl    String?
+  category    String
+  isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// ─── SHOW CHECK-IN ──────────────────────────────────────────
+
+model ShowCheckin {
+  id           String   @id @default(cuid())
+  gigId        String
+  subscriberId String?
+  email        String
+  name         String?
+  checkedInAt  DateTime
+  source       String   @default("qr")
+  createdAt    DateTime @default(now())
+
+  gig        Gig         @relation(fields: [gigId], references: [id], onDelete: Cascade)
+  subscriber Subscriber? @relation(fields: [subscriberId], references: [id])
+
+  @@index([gigId])
+}
+
+// ─── COLLABORATION MARKETPLACE ──────────────────────────────
+
+model CollabProfile {
+  id           String   @id @default(cuid())
+  userId       String
+  role         String
+  skills       String[]
+  portfolio    Json?
+  hourlyRate   Float?
+  projectRate  Float?
+  availability String
+  location     String?
+  bio          String?
+  rating       Float?
+  reviewCount  Int      @default(0)
+  isAvailable  Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user     User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bookings CollabBooking[]
+
+  @@index([userId])
+}
+
+model CollabBooking {
+  id                 String              @id @default(cuid())
+  clientUserId       String
+  providerUserId     String
+  collabProfileId    String
+  projectDescription String
+  budget             Float?
+  status             CollabBookingStatus @default(INQUIRY)
+  startDate          DateTime?
+  endDate            DateTime?
+  rating             Int?
+  review             String?
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+
+  clientUser    User          @relation("CollabBookingClient", fields: [clientUserId], references: [id], onDelete: Cascade)
+  providerUser  User          @relation("CollabBookingProvider", fields: [providerUserId], references: [id], onDelete: Cascade)
+  collabProfile CollabProfile @relation(fields: [collabProfileId], references: [id], onDelete: Cascade)
+
+  @@index([clientUserId])
+  @@index([providerUserId])
+}
+
+// ─── PRESS & MEDIA OUTREACH ─────────────────────────────────
+
+model MediaContact {
+  id              String    @id @default(cuid())
+  name            String
+  email           String
+  outlet          String
+  type            String
+  genres          String[]
+  socialFollowers Int?
+  lastContactedAt DateTime?
+  notes           String?
+  isVerified      Boolean   @default(false)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  pressOutreaches PressOutreach[]
+}
+
+model PressOutreach {
+  id             String         @id @default(cuid())
+  userId         String
+  mediaContactId String
+  releaseId      String?
+  subject        String
+  message        String
+  status         OutreachStatus @default(DRAFT)
+  sentAt         DateTime?
+  repliedAt      DateTime?
+  articleUrl     String?
+  notes          String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mediaContact MediaContact @relation(fields: [mediaContactId], references: [id], onDelete: Cascade)
+  release      Release?     @relation(fields: [releaseId], references: [id])
+
+  @@index([userId])
+}
+
+// ─── AUDIENCE GROWTH ENGINE ─────────────────────────────────
+
+model AudiencePersona {
+  id              String   @id @default(cuid())
+  userId          String
+  name            String
+  description     String
+  ageRange        String
+  gender          String?
+  interests       String[]
+  platforms       String[]
+  listeningHabits String?
+  locationRegions String[]
+  estimatedSize   Int?
+  adTargeting     Json?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  adCampaigns AdCampaign[]
+
+  @@index([userId])
+}
+
+// ─── AD MANAGEMENT ──────────────────────────────────────────
+
+model AdCampaign {
+  id              String           @id @default(cuid())
+  userId          String
+  platform        String
+  name            String
+  budget          Float
+  spent           Float            @default(0)
+  impressions     Int              @default(0)
+  clicks          Int              @default(0)
+  conversions     Int              @default(0)
+  status          AdCampaignStatus @default(DRAFT)
+  targetPersonaId String?
+  smartLinkId     String?
+  startDate       DateTime?
+  endDate         DateTime?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  user          User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  targetPersona AudiencePersona? @relation(fields: [targetPersonaId], references: [id])
+  smartLink     SmartLink?       @relation(fields: [smartLinkId], references: [id])
+
+  @@index([userId])
+}
+
+// ─── ROYALTY TRACKING ───────────────────────────────────────
+
+model RoyaltyStatement {
+  id            String   @id @default(cuid())
+  userId        String
+  distributor   String
+  period        String
+  fileName      String?
+  fileUrl       String?
+  totalAmount   Float
+  currency      String   @default("USD")
+  streams       Int?
+  downloads     Int?
+  discrepancies Json?
+  isReconciled  Boolean  @default(false)
+  importedAt    DateTime
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// ─── OPPORTUNITY RADAR ──────────────────────────────────────
+
+model OpportunityAlert {
+  id          String            @id @default(cuid())
+  userId      String
+  type        String
+  title       String
+  description String
+  url         String?
+  deadline    DateTime?
+  matchScore  Float?
+  status      OpportunityStatus @default(NEW)
+  source      String?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// ─── CAREER DNA ─────────────────────────────────────────────
+
+model CareerDNA {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  soundProfile    Json
+  audienceProfile Json
+  growthPattern   Json
+  similarArtists  Json
+  optimalPath     Json?
+  strengthAreas   String[]
+  growthAreas     String[]
+  lastAnalyzedAt  DateTime
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ─── RELEASE REPLAY ─────────────────────────────────────────
+
+model ReleaseReplay {
+  id              String   @id @default(cuid())
+  userId          String
+  releaseId       String
+  analysis        Json
+  whatWorked      String[]
+  whatDidnt       String[]
+  recommendations String[]
+  streamGoal      Int?
+  streamActual    Int?
+  engagementScore Float?
+  generatedAt     DateTime
+  createdAt       DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  release Release @relation(fields: [releaseId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// ─── TEAM / MULTI-ARTIST SUPPORT ────────────────────────────
+
+model TeamMember {
+  id           String         @id @default(cuid())
+  userId       String
+  memberEmail  String
+  memberName   String
+  role         TeamMemberRole
+  permissions  String[]
+  inviteStatus InviteStatus   @default(PENDING)
+  invitedAt    DateTime
+  acceptedAt   DateTime?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// ─── REVENUE FORECAST ───────────────────────────────────────
+
+model RevenueForecast {
+  id               String   @id @default(cuid())
+  userId           String
+  period           String
+  predictedRevenue Float
+  actualRevenue    Float?
+  confidence       Float
+  factors          Json
+  model            String   @default("v1")
+  createdAt        DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
 }

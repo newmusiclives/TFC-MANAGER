@@ -3,8 +3,19 @@
 import DashboardSidebar from "@/components/DashboardSidebar";
 import { Bell, MapPin, Users, Star, Heart, TrendingUp, ArrowUpRight, Globe, Filter, Zap } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { useState, useEffect } from "react";
+import { apiGet } from "@/lib/api-client";
 
-const cities = [
+type CityData = {
+  city: string; country: string; lat: number; lng: number;
+  listeners: number; superfans: number; growth: string; intensity: number;
+};
+type SuperfanData = {
+  name: string; city: string; score: number; saves: number;
+  shares: number; streams: number; lastActive: string;
+};
+
+const defaultCities: CityData[] = [
   { city: "Los Angeles", country: "US", lat: 34, lng: -118, listeners: 2840, superfans: 42, growth: "+18%", intensity: 95 },
   { city: "Paris", country: "FR", lat: 48.8, lng: 2.3, listeners: 1920, superfans: 28, growth: "+24%", intensity: 80 },
   { city: "London", country: "UK", lat: 51.5, lng: -0.1, listeners: 1640, superfans: 22, growth: "+12%", intensity: 72 },
@@ -12,12 +23,12 @@ const cities = [
   { city: "Berlin", country: "DE", lat: 52.5, lng: 13.4, listeners: 980, superfans: 14, growth: "+31%", intensity: 52 },
   { city: "Toronto", country: "CA", lat: 43.7, lng: -79.4, listeners: 820, superfans: 11, growth: "+9%", intensity: 44 },
   { city: "Sydney", country: "AU", lat: -33.9, lng: 151.2, listeners: 640, superfans: 8, growth: "+22%", intensity: 36 },
-  { city: "São Paulo", country: "BR", lat: -23.5, lng: -46.6, listeners: 580, superfans: 7, growth: "+45%", intensity: 32 },
+  { city: "S\u00e3o Paulo", country: "BR", lat: -23.5, lng: -46.6, listeners: 580, superfans: 7, growth: "+45%", intensity: 32 },
   { city: "Tokyo", country: "JP", lat: 35.7, lng: 139.7, listeners: 420, superfans: 5, growth: "+38%", intensity: 24 },
   { city: "Mexico City", country: "MX", lat: 19.4, lng: -99.1, listeners: 380, superfans: 4, growth: "+52%", intensity: 20 },
 ];
 
-const superfans = [
+const defaultSuperfans: SuperfanData[] = [
   { name: "Alex M.", city: "Los Angeles", score: 98, saves: 47, shares: 23, streams: 312, lastActive: "2 hours ago" },
   { name: "Marie L.", city: "Paris", score: 96, saves: 41, shares: 19, streams: 289, lastActive: "4 hours ago" },
   { name: "James K.", city: "London", score: 94, saves: 38, shares: 31, streams: 267, lastActive: "1 hour ago" },
@@ -25,8 +36,12 @@ const superfans = [
   { name: "Lukas B.", city: "Berlin", score: 89, saves: 33, shares: 28, streams: 221, lastActive: "3 hours ago" },
   { name: "Emma R.", city: "Toronto", score: 87, saves: 29, shares: 12, streams: 198, lastActive: "8 hours ago" },
   { name: "Yuki S.", city: "Tokyo", score: 85, saves: 27, shares: 17, streams: 186, lastActive: "5 hours ago" },
-  { name: "Pedro C.", city: "São Paulo", score: 82, saves: 24, shares: 22, streams: 174, lastActive: "12 hours ago" },
+  { name: "Pedro C.", city: "S\u00e3o Paulo", score: 82, saves: 24, shares: 22, streams: 174, lastActive: "12 hours ago" },
 ];
+
+const defaultStats = {
+  citiesReached: "48", countries: "23", superfansCount: "160", avgEngagement: "24.3%",
+};
 
 const hourlyActivity = Array.from({ length: 24 }, (_, i) => ({
   hour: `${i.toString().padStart(2, "0")}:00`,
@@ -37,6 +52,26 @@ const hourlyActivity = Array.from({ length: 24 }, (_, i) => ({
 }));
 
 export default function FanHeatmapPage() {
+  const [cities, setCities] = useState<CityData[]>(defaultCities);
+  const [superfans, setSuperfans] = useState<SuperfanData[]>(defaultSuperfans);
+  const [stats, setStats] = useState(defaultStats);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    apiGet<{ cities: CityData[]; superfans: SuperfanData[]; stats: typeof defaultStats }>("/api/fan-heatmap")
+      .then((d) => {
+        if (d.cities) setCities(d.cities);
+        if (d.superfans) setSuperfans(d.superfans);
+        if (d.stats) setStats({
+          citiesReached: String(d.stats.citiesReached),
+          countries: String(d.stats.countries),
+          superfansCount: String(d.stats.superfansCount),
+          avgEngagement: String(d.stats.avgEngagement),
+        });
+      })
+      .catch(() => {/* keep mock data */})
+      .finally(() => setLoading(false));
+  }, []);
   return (
     <div className="flex min-h-screen bg-gray-50">
       <DashboardSidebar />
@@ -57,13 +92,18 @@ export default function FanHeatmapPage() {
         </div>
 
         <div className="p-8">
+          {loading && (
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-spin w-8 h-8 border-4 border-[var(--primary)] border-t-transparent rounded-full" />
+            </div>
+          )}
           {/* Stats */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
             {[
-              { label: "Cities Reached", value: "48", icon: Globe, color: "bg-blue-50 text-blue-600" },
-              { label: "Countries", value: "23", icon: MapPin, color: "bg-green-50 text-green-600" },
-              { label: "Superfans (Top 1%)", value: "160", icon: Star, color: "bg-amber-50 text-amber-600" },
-              { label: "Avg. Engagement", value: "24.3%", icon: Heart, color: "bg-pink-50 text-pink-600" },
+              { label: "Cities Reached", value: stats.citiesReached, icon: Globe, color: "bg-blue-50 text-blue-600" },
+              { label: "Countries", value: stats.countries, icon: MapPin, color: "bg-green-50 text-green-600" },
+              { label: "Superfans (Top 1%)", value: stats.superfansCount, icon: Star, color: "bg-amber-50 text-amber-600" },
+              { label: "Avg. Engagement", value: stats.avgEngagement, icon: Heart, color: "bg-pink-50 text-pink-600" },
             ].map((s) => (
               <div key={s.label} className="bg-white rounded-xl p-5 border border-gray-100">
                 <div className={`w-9 h-9 rounded-lg flex items-center justify-center mb-3 ${s.color}`}>

@@ -44,10 +44,25 @@ interface CommandItem {
   name: string;
   description: string;
   icon: React.ElementType;
-  category: "Pages" | "Actions" | "Recent";
+  category: "Pages" | "Actions" | "Recent" | "Search Results";
   path: string;
   shortcut?: string;
 }
+
+// ------ Searchable mock data ------
+const searchableData: CommandItem[] = [
+  // Releases
+  { id: "search-release-1", name: "Midnight Dreams", description: "Release", icon: Music, category: "Search Results", path: "/dashboard/releases" },
+  { id: "search-release-2", name: "Golden Hour", description: "Release", icon: Music, category: "Search Results", path: "/dashboard/releases" },
+  { id: "search-release-3", name: "Electric Pulse", description: "Release", icon: Music, category: "Search Results", path: "/dashboard/releases" },
+  // Subscribers
+  { id: "search-sub-1", name: "Sarah Johnson", description: "Subscriber", icon: Users, category: "Search Results", path: "/dashboard/fans" },
+  { id: "search-sub-2", name: "Mike Chen", description: "Subscriber", icon: Users, category: "Search Results", path: "/dashboard/fans" },
+  { id: "search-sub-3", name: "Alex Rivera", description: "Subscriber", icon: Users, category: "Search Results", path: "/dashboard/fans" },
+  // Contracts
+  { id: "search-contract-1", name: "Sony Distribution Agreement", description: "Contract", icon: FileText, category: "Search Results", path: "/dashboard/contracts" },
+  { id: "search-contract-2", name: "Sync License - Nike", description: "Contract", icon: FileText, category: "Search Results", path: "/dashboard/contracts" },
+];
 
 const pages: CommandItem[] = [
   { id: "dashboard", name: "Dashboard", description: "Overview and key metrics", icon: LayoutDashboard, category: "Pages", path: "/dashboard" },
@@ -67,6 +82,7 @@ const pages: CommandItem[] = [
   { id: "streaming", name: "Streaming", description: "Streaming platform stats", icon: Headphones, category: "Pages", path: "/dashboard/streaming" },
   { id: "catalog", name: "Catalog", description: "Music catalog", icon: Library, category: "Pages", path: "/dashboard/catalog" },
   { id: "playlists", name: "Playlists", description: "Playlist pitching and tracking", icon: ListMusic, category: "Pages", path: "/dashboard/playlists" },
+  { id: "playlist-pitching", name: "Playlist Pitching", description: "AI-powered playlist pitching", icon: ListMusic, category: "Pages", path: "/dashboard/playlist-pitching" },
   { id: "songwriting", name: "Songwriting", description: "Songwriting sessions and splits", icon: PenTool, category: "Pages", path: "/dashboard/songwriting" },
   { id: "social", name: "Social Media", description: "Social media management", icon: Share2, category: "Pages", path: "/dashboard/social" },
   { id: "notifications", name: "Notifications", description: "Alerts and notifications", icon: Bell, category: "Pages", path: "/dashboard/notifications" },
@@ -77,11 +93,25 @@ const pages: CommandItem[] = [
   { id: "videos", name: "Videos", description: "Music video management", icon: Video, category: "Pages", path: "/dashboard/videos" },
   { id: "artwork", name: "Artwork", description: "Cover art and visual assets", icon: Image, category: "Pages", path: "/dashboard/artwork" },
   { id: "ai-manager", name: "AI Manager", description: "AI-powered music manager", icon: Sparkles, category: "Pages", path: "/dashboard/ai-manager" },
+  { id: "ai-autopilot", name: "AI Autopilot", description: "AI action queue and autonomous management", icon: Bot, category: "Pages", path: "/dashboard/ai-autopilot" },
   { id: "contracts", name: "Contracts", description: "Contracts and agreements", icon: FileText, category: "Pages", path: "/dashboard/contracts" },
   { id: "sync", name: "Sync Licensing", description: "Sync and licensing deals", icon: Globe, category: "Pages", path: "/dashboard/sync" },
   { id: "press", name: "Press", description: "Press kit and media coverage", icon: Megaphone, category: "Pages", path: "/dashboard/press" },
   { id: "collabs", name: "Collaborations", description: "Artist collaborations", icon: Users, category: "Pages", path: "/dashboard/collabs" },
   { id: "publishing", name: "Publishing", description: "Music publishing admin", icon: FileText, category: "Pages", path: "/dashboard/publishing" },
+  { id: "sync-licensing", name: "Sync Licensing", description: "Sync and licensing deals", icon: Globe, category: "Pages", path: "/dashboard/sync-licensing" },
+  { id: "live-hub", name: "Live Hub", description: "Live performance management", icon: Mic2, category: "Pages", path: "/dashboard/live-hub" },
+  { id: "collab-marketplace", name: "Collab Marketplace", description: "Find and manage collaborations", icon: Users, category: "Pages", path: "/dashboard/collab-marketplace" },
+  { id: "press-outreach", name: "Press Outreach", description: "AI-powered press and media outreach", icon: Megaphone, category: "Pages", path: "/dashboard/press-outreach" },
+  { id: "audience-growth", name: "Audience Growth", description: "Audience growth strategies and tracking", icon: TrendingUp, category: "Pages", path: "/dashboard/audience-growth" },
+  { id: "royalty-tracker", name: "Royalty Tracker", description: "Track and reconcile royalty payments", icon: DollarSign, category: "Pages", path: "/dashboard/royalty-tracker" },
+  { id: "career-dna", name: "Career DNA", description: "AI-powered career analysis and insights", icon: Sparkles, category: "Pages", path: "/dashboard/career-dna" },
+  { id: "fan-value-score", name: "Fan Value Score", description: "Measure and track fan engagement value", icon: Heart, category: "Pages", path: "/dashboard/fan-value" },
+  { id: "release-replay", name: "Release Replay", description: "Replay and analyze past releases", icon: Clock, category: "Pages", path: "/dashboard/release-replay" },
+  { id: "opportunity-radar", name: "Opportunity Radar", description: "Discover new career opportunities", icon: Target, category: "Pages", path: "/dashboard/opportunity-radar" },
+  { id: "smart-negotiator", name: "Smart Negotiator", description: "AI-powered deal negotiation assistant", icon: Bot, category: "Pages", path: "/dashboard/smart-negotiator" },
+  { id: "revenue-forecast", name: "Revenue Forecast", description: "AI revenue projections and forecasting", icon: TrendingUp, category: "Pages", path: "/dashboard/revenue-forecast" },
+  { id: "seo-aieo", name: "SEO & AIEO", description: "Search engine and AI engine optimization", icon: Search, category: "Pages", path: "/dashboard/seo-aieo" },
 ];
 
 const actions: CommandItem[] = [
@@ -99,9 +129,10 @@ const recentItems: CommandItem[] = [
 
 const allItems = [...recentItems, ...actions, ...pages];
 
-const categoryOrder: Record<string, number> = { Recent: 0, Actions: 1, Pages: 2 };
+const categoryOrder: Record<string, number> = { "Search Results": 0, Recent: 1, Actions: 2, Pages: 3 };
 
 const categoryBadgeColors: Record<string, string> = {
+  "Search Results": "bg-green-100 text-green-700",
   Recent: "bg-gray-100 text-gray-600",
   Actions: "bg-purple-100 text-purple-700",
   Pages: "bg-blue-100 text-blue-700",
@@ -118,11 +149,18 @@ export default function CommandK() {
   const filtered = useMemo(() => {
     if (!query.trim()) return allItems;
     const q = query.toLowerCase();
-    return allItems.filter(
+    // Search across mock data as well when there is a query
+    const matchingSearchResults = searchableData.filter(
       (item) =>
         item.name.toLowerCase().includes(q) ||
         item.description.toLowerCase().includes(q)
     );
+    const matchingPages = allItems.filter(
+      (item) =>
+        item.name.toLowerCase().includes(q) ||
+        item.description.toLowerCase().includes(q)
+    );
+    return [...matchingSearchResults, ...matchingPages];
   }, [query]);
 
   const grouped = useMemo(() => {

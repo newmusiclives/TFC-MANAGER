@@ -26,7 +26,7 @@ export default function Header() {
               <span className="text-white font-bold text-sm">TF</span>
             </div>
             <span className="font-bold text-xl tracking-tight">
-              TrueFans<span className="text-[var(--primary)]"> Manager</span>
+              TrueFans<span className="text-[var(--primary)]"> MANAGER</span>
             </span>
           </Link>
 

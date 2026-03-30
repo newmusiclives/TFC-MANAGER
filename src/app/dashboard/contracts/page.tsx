@@ -17,6 +17,11 @@ import {
   Eye,
   Download,
   Trash2,
+  GitCompare,
+  BookOpen,
+  X,
+  CalendarClock,
+  ChevronRight,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { apiGet, apiPost } from "@/lib/api-client";
@@ -123,12 +128,87 @@ const analyzedContracts: Contract[] = [
   },
 ];
 
+const clauseLibraryItems = [
+  {
+    id: "cl1",
+    title: "Standard Distribution Terms",
+    bullets: [
+      "Typical revenue split ranges from 80/20 to 85/15 in the artist's favor",
+      "Standard term length is 1-3 years with renewal options",
+      "Normal: Non-exclusive or limited-exclusive territorial rights",
+      "Red flag: Perpetual exclusivity with no termination clause",
+      "Red flag: 'Net receipts' defined with uncapped deductions",
+      "Expect quarterly reporting with 45-60 day payment windows",
+    ],
+  },
+  {
+    id: "cl2",
+    title: "Typical Sync License Terms",
+    bullets: [
+      "One-time upfront fee is standard for sync placements ($1K-$500K+ depending on usage)",
+      "Performance royalties flow separately through your PRO — ensure registration",
+      "Normal: Usage limited to specific media (TV, film, web) and territory",
+      "Red flag: Perpetual worldwide usage rights for a one-time flat fee",
+      "Red flag: Options to extend usage without additional compensation",
+      "Most favored nations (MFN) clauses are common when master + publishing are split",
+    ],
+  },
+  {
+    id: "cl3",
+    title: "Management Agreement Standards",
+    bullets: [
+      "Typical commission ranges from 15-20% of gross income",
+      "Sunset clauses should reduce commission post-termination (e.g., 15% year 1, 10% year 2, 5% year 3)",
+      "Normal: 1-2 year initial term with option periods",
+      "Red flag: Commission on all income including non-music revenue",
+      "Red flag: No performance benchmarks or key-person clause",
+      "Ensure clear definition of 'gross income' and what is excluded (e.g., touring expenses)",
+    ],
+  },
+  {
+    id: "cl4",
+    title: "Publishing Deal Norms",
+    bullets: [
+      "Co-publishing deals typically split 75/25 in writer's favor (of publisher's share)",
+      "Standard advance recoupment from your royalty share only",
+      "Normal: Reversion of rights after 10-15 years or upon recoupment",
+      "Red flag: Life-of-copyright terms with no reversion",
+      "Red flag: Controlled composition clauses reducing mechanical rates",
+      "Ensure audit rights with reasonable notice period (30-60 days)",
+    ],
+  },
+  {
+    id: "cl5",
+    title: "Recording Contract Essentials",
+    bullets: [
+      "Album commitments should be clearly defined (number of tracks, delivery timeline)",
+      "Advances should be reasonable and recoupable only from artist royalties",
+      "Normal: Label retains master ownership during term, with reversion possibility",
+      "Red flag: 360 deals taking percentage of touring, merch, and publishing without added value",
+      "Red flag: Perpetual master ownership with no reversion clause",
+      "Approval rights for single selection, artwork, and marketing are worth negotiating",
+    ],
+  },
+];
+
+const mockDeadlines = [
+  { id: "d1", label: "Option period expires", date: "Jun 15, 2026", color: "bg-red-500", daysAway: 78 },
+  { id: "d2", label: "Renewal deadline", date: "Aug 1, 2026", color: "bg-yellow-500", daysAway: 125 },
+  { id: "d3", label: "Sync license expires", date: "Sep 20, 2026", color: "bg-blue-500", daysAway: 175 },
+  { id: "d4", label: "Audit window opens", date: "Nov 1, 2026", color: "bg-purple-500", daysAway: 217 },
+];
+
 export default function ContractsPage() {
   const [expandedContract, setExpandedContract] = useState<string | null>("c1");
   const [expandedClause, setExpandedClause] = useState<string | null>(null);
   const [showUpload, setShowUpload] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
   const [contracts, setContracts] = useState<Contract[]>(analyzedContracts);
+  const [activeTab, setActiveTab] = useState<"contracts" | "clause-library">("contracts");
+  const [showCompare, setShowCompare] = useState(false);
+  const [compareSelection, setCompareSelection] = useState<string[]>([]);
+  const [compareView, setCompareView] = useState(false);
+  const [expandedLibraryClause, setExpandedLibraryClause] = useState<string | null>(null);
 
   useEffect(() => {
     apiGet<Contract[]>("/api/contracts")
@@ -194,6 +274,9 @@ export default function ContractsPage() {
             <p className="text-sm text-gray-500">AI-powered legal document simplification</p>
           </div>
           <div className="flex items-center gap-3">
+            <button onClick={() => { setShowCompare(true); setCompareSelection([]); setCompareView(false); }} className="inline-flex items-center gap-2 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-medium text-sm px-4 py-2.5 rounded-lg transition-colors">
+              <GitCompare size={16} /> Compare
+            </button>
             <button onClick={() => setShowUpload(!showUpload)} className="inline-flex items-center gap-2 bg-[var(--primary)] hover:bg-[var(--primary-dark)] text-white font-medium text-sm px-4 py-2.5 rounded-lg transition-colors">
               <Upload size={16} /> Upload Contract
             </button>
@@ -204,6 +287,92 @@ export default function ContractsPage() {
         </div>
 
         <div className="p-8">
+          {/* Deadline Tracker */}
+          <div className="bg-white rounded-2xl border border-gray-100 p-6 mb-6">
+            <div className="flex items-center gap-2 mb-4">
+              <CalendarClock size={20} className="text-[var(--primary)]" />
+              <h2 className="font-bold text-lg">Upcoming Contract Deadlines</h2>
+            </div>
+            <div className="relative px-4 py-2">
+              {/* Timeline line */}
+              <div className="absolute top-1/2 left-4 right-4 h-0.5 bg-gray-200 -translate-y-1/2" />
+              <div className="relative flex justify-between items-center">
+                {mockDeadlines.map((deadline) => (
+                  <div key={deadline.id} className="flex flex-col items-center z-10 group">
+                    <div className="text-xs text-gray-500 font-medium mb-2 text-center max-w-[120px] leading-tight">{deadline.label}</div>
+                    <div className={`w-4 h-4 ${deadline.color} rounded-full ring-4 ring-white shadow-sm group-hover:scale-125 transition-transform`} />
+                    <div className="text-xs text-gray-600 font-semibold mt-2">{deadline.date}</div>
+                    <div className="text-[10px] text-gray-400 mt-0.5">{deadline.daysAway} days</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Tabs */}
+          <div className="flex gap-1 mb-6 bg-gray-100 p-1 rounded-xl w-fit">
+            <button
+              onClick={() => setActiveTab("contracts")}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === "contracts" ? "bg-white shadow-sm text-gray-900" : "text-gray-500 hover:text-gray-700"}`}
+            >
+              Contracts
+            </button>
+            <button
+              onClick={() => setActiveTab("clause-library")}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${activeTab === "clause-library" ? "bg-white shadow-sm text-gray-900" : "text-gray-500 hover:text-gray-700"}`}
+            >
+              <BookOpen size={14} /> Clause Library
+            </button>
+          </div>
+
+          {/* Clause Library Tab */}
+          {activeTab === "clause-library" && (
+            <div className="space-y-3">
+              {clauseLibraryItems.map((item) => {
+                const isOpen = expandedLibraryClause === item.id;
+                return (
+                  <div key={item.id} className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+                    <button
+                      onClick={() => setExpandedLibraryClause(isOpen ? null : item.id)}
+                      className="w-full flex items-center justify-between p-5 hover:bg-gray-50/50 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center">
+                          <BookOpen size={18} className="text-blue-600" />
+                        </div>
+                        <span className="font-semibold text-sm">{item.title}</span>
+                      </div>
+                      <ChevronDown size={18} className={`text-gray-400 transition-transform ${isOpen ? "rotate-180" : ""}`} />
+                    </button>
+                    {isOpen && (
+                      <div className="border-t border-gray-100 px-5 pb-5">
+                        <ul className="space-y-2 mt-4">
+                          {item.bullets.map((bullet, bIdx) => {
+                            const isRedFlag = bullet.toLowerCase().startsWith("red flag:");
+                            const isNormal = bullet.toLowerCase().startsWith("normal:");
+                            return (
+                              <li key={bIdx} className={`flex items-start gap-2.5 text-sm rounded-lg px-3 py-2 ${isRedFlag ? "bg-red-50 text-red-800" : isNormal ? "bg-green-50 text-green-800" : "bg-gray-50 text-gray-700"}`}>
+                                {isRedFlag ? (
+                                  <AlertTriangle size={14} className="text-red-500 mt-0.5 shrink-0" />
+                                ) : isNormal ? (
+                                  <CheckCircle2 size={14} className="text-green-500 mt-0.5 shrink-0" />
+                                ) : (
+                                  <ChevronRight size={14} className="text-gray-400 mt-0.5 shrink-0" />
+                                )}
+                                <span>{bullet}</span>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {activeTab === "contracts" && (<>
           {/* Upload */}
           {showUpload && (
             <div className="bg-white rounded-2xl border border-gray-100 p-6 mb-6">
@@ -341,7 +510,107 @@ export default function ContractsPage() {
               </div>
             ))}
           </div>
+          </>)}
         </div>
+
+        {/* Compare Modal */}
+        {showCompare && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" onClick={() => setShowCompare(false)}>
+            <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full mx-4 max-h-[85vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center justify-between p-6 border-b border-gray-100">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center">
+                    <GitCompare size={20} className="text-blue-600" />
+                  </div>
+                  <h2 className="font-bold text-lg">{compareView ? "Contract Comparison" : "Select Contracts to Compare"}</h2>
+                </div>
+                <button onClick={() => setShowCompare(false)} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                  <X size={18} className="text-gray-400" />
+                </button>
+              </div>
+
+              <div className="p-6">
+                {!compareView ? (
+                  <>
+                    <p className="text-sm text-gray-500 mb-4">Select exactly 2 contracts to compare side by side.</p>
+                    <div className="space-y-3 mb-6">
+                      {contracts.map((c) => (
+                        <label
+                          key={c.id}
+                          className={`flex items-center gap-3 p-4 border rounded-xl cursor-pointer transition-colors ${compareSelection.includes(c.id) ? "border-[var(--primary)] bg-blue-50/50" : "border-gray-200 hover:border-gray-300"}`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={compareSelection.includes(c.id)}
+                            onChange={() => {
+                              setCompareSelection((prev) =>
+                                prev.includes(c.id) ? prev.filter((id) => id !== c.id) : prev.length < 2 ? [...prev, c.id] : prev
+                              );
+                            }}
+                            className="accent-[var(--primary)]"
+                          />
+                          <div>
+                            <span className="font-medium text-sm">{c.name}</span>
+                            <span className={`ml-2 text-xs font-semibold px-2 py-0.5 rounded-full capitalize ${riskColor(c.overallRisk)}`}>{c.overallRisk} risk</span>
+                          </div>
+                        </label>
+                      ))}
+                    </div>
+                    <button
+                      disabled={compareSelection.length !== 2}
+                      onClick={() => setCompareView(true)}
+                      className="bg-[var(--primary)] hover:bg-[var(--primary-dark)] disabled:opacity-40 disabled:cursor-not-allowed text-white font-medium text-sm px-5 py-2.5 rounded-lg transition-colors"
+                    >
+                      Compare Selected
+                    </button>
+                  </>
+                ) : (
+                  <div className="grid grid-cols-2 gap-6">
+                    {compareSelection.map((cId) => {
+                      const c = contracts.find((ct) => ct.id === cId);
+                      if (!c) return null;
+                      return (
+                        <div key={c.id} className="space-y-4">
+                          <div className="border border-gray-200 rounded-xl p-4">
+                            <h3 className="font-bold text-sm mb-2 truncate">{c.name}</h3>
+                            <div className="space-y-2 text-sm">
+                              <div className="flex justify-between">
+                                <span className="text-gray-500">Risk Level</span>
+                                <span className={`font-semibold px-2 py-0.5 rounded-full text-xs capitalize ${riskColor(c.overallRisk)}`}>{c.overallRisk}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-gray-500">Total Clauses</span>
+                                <span className="font-semibold">{c.clauses.length}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-gray-500">Flagged Clauses</span>
+                                <span className="font-semibold text-red-600">{c.clauses.filter((cl) => cl.risk === "high").length} high, {c.clauses.filter((cl) => cl.risk === "medium").length} medium</span>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="space-y-2">
+                            {c.clauses.map((clause, idx) => (
+                              <div
+                                key={idx}
+                                className={`rounded-lg px-3 py-2 text-sm border ${clause.risk === "high" ? "border-red-200 bg-red-50" : clause.risk === "medium" ? "border-yellow-200 bg-yellow-50" : "border-green-200 bg-green-50"}`}
+                              >
+                                <div className="flex items-center justify-between">
+                                  <span className="font-medium">{clause.title}</span>
+                                  <span className={`text-xs font-bold uppercase ${clause.risk === "high" ? "text-red-600" : clause.risk === "medium" ? "text-yellow-600" : "text-green-600"}`}>{clause.risk}</span>
+                                </div>
+                                <p className="text-xs text-gray-600 mt-1">{clause.summary}</p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );

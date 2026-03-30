@@ -1,6 +1,7 @@
 import { SignJWT, jwtVerify } from "jose";
 import bcrypt from "bcryptjs";
 import { cookies } from "next/headers";
+import prisma from "@/lib/prisma";
 
 const JWT_SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET || "truefans-manager-admin-secret-key-change-in-production"
@@ -8,8 +9,8 @@ const JWT_SECRET = new TextEncoder().encode(
 
 const ADMIN_COOKIE = "tfc_admin_token";
 
-// In-memory admin store (replace with DB in production)
-const admins = [
+// Fallback in-memory admin store (used when DB is not configured)
+const fallbackAdmins = [
   {
     id: "1",
     email: "admin@truefansmanager.com",
@@ -29,11 +30,46 @@ export type Admin = {
   avatar: string;
 };
 
+/** Map Prisma UserRole enum values to the Admin role type used throughout the admin panel. */
+function mapDbRole(role: string): "super_admin" | "admin" | "moderator" | null {
+  switch (role) {
+    case "SUPER_ADMIN":
+      return "super_admin";
+    case "ADMIN":
+      return "admin";
+    default:
+      return null;
+  }
+}
+
 export async function authenticateAdmin(
   email: string,
   password: string
 ): Promise<Admin | null> {
-  const admin = admins.find((a) => a.email === email);
+  // Try database first
+  try {
+    const dbUser = await prisma.user.findUnique({ where: { email } });
+    if (dbUser) {
+      const mappedRole = mapDbRole(dbUser.role);
+      if (!mappedRole) return null; // Not an admin
+
+      const valid = await bcrypt.compare(password, dbUser.passwordHash);
+      if (!valid) return null;
+
+      return {
+        id: dbUser.id,
+        email: dbUser.email,
+        name: dbUser.name,
+        role: mappedRole,
+        avatar: dbUser.avatar || dbUser.name.slice(0, 2).toUpperCase(),
+      };
+    }
+  } catch {
+    // Database not configured or query failed — fall through to fallback
+  }
+
+  // Fallback to in-memory admin
+  const admin = fallbackAdmins.find((a) => a.email === email);
   if (!admin) return null;
 
   const valid = await bcrypt.compare(password, admin.password);
@@ -61,7 +97,29 @@ export async function verifyToken(
 ): Promise<Admin | null> {
   try {
     const { payload } = await jwtVerify(token, JWT_SECRET);
-    const admin = admins.find((a) => a.id === payload.sub);
+    const id = payload.sub;
+    if (!id) return null;
+
+    // Try database first
+    try {
+      const dbUser = await prisma.user.findUnique({ where: { id } });
+      if (dbUser) {
+        const mappedRole = mapDbRole(dbUser.role);
+        if (!mappedRole) return null;
+        return {
+          id: dbUser.id,
+          email: dbUser.email,
+          name: dbUser.name,
+          role: mappedRole,
+          avatar: dbUser.avatar || dbUser.name.slice(0, 2).toUpperCase(),
+        };
+      }
+    } catch {
+      // Database not configured — fall through to fallback
+    }
+
+    // Fallback to in-memory admin
+    const admin = fallbackAdmins.find((a) => a.id === id);
     if (!admin) return null;
     return {
       id: admin.id,

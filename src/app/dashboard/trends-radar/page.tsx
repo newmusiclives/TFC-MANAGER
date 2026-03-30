@@ -2,6 +2,8 @@
 
 import DashboardSidebar from "@/components/DashboardSidebar";
 import { Bell, Radar, TrendingUp, Music2, Users, Tv, Film, Gamepad2, ArrowUpRight, ExternalLink, Sparkles, Flame, Clock, Target } from "lucide-react";
+import { useState, useEffect } from "react";
+import { apiGet } from "@/lib/api-client";
 
 const trendingSounds = [
   { name: "Lo-fi Synth Washes", platform: "TikTok", growth: "+340%", uses: "12.4K", relevance: 92, genre: "Electronic" },
@@ -34,6 +36,34 @@ const playlistCurators = [
 ];
 
 export default function TrendsRadarPage() {
+  const [data, setData] = useState({
+    trendingSounds,
+    risingArtists,
+    syncOpportunities,
+    playlistCurators,
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    apiGet<typeof data>("/api/trends-radar")
+      .then((d) => {
+        if (d.trendingSounds) setData(d);
+      })
+      .catch(() => {/* keep mock data */})
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen bg-gray-50">
+        <DashboardSidebar />
+        <main className="flex-1 lg:ml-64 flex items-center justify-center">
+          <div className="animate-spin w-8 h-8 border-4 border-[var(--primary)] border-t-transparent rounded-full" />
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-h-screen bg-gray-50">
       <DashboardSidebar />
@@ -55,7 +85,7 @@ export default function TrendsRadarPage() {
             <h2 className="font-bold text-lg mb-1 flex items-center gap-2"><Flame size={20} className="text-orange-500" /> Trending Sounds</h2>
             <p className="text-sm text-gray-500 mb-4">Hot audio trends on social platforms right now</p>
             <div className="space-y-3">
-              {trendingSounds.map((t, idx) => (
+              {data.trendingSounds.map((t, idx) => (
                 <div key={t.name} className="flex items-center gap-4 py-3 border-b border-gray-50 last:border-0">
                   <span className="text-lg font-bold text-gray-200 w-6">{idx + 1}</span>
                   <div className="flex-1">
@@ -87,7 +117,7 @@ export default function TrendsRadarPage() {
               <h2 className="font-bold text-lg mb-1 flex items-center gap-2"><Users size={20} className="text-purple-600" /> Rising Artists to Watch</h2>
               <p className="text-sm text-gray-500 mb-4">Potential collaborators in your orbit</p>
               <div className="space-y-3">
-                {risingArtists.map((a) => (
+                {data.risingArtists.map((a) => (
                   <div key={a.name} className="flex items-center gap-3 py-2 border-b border-gray-50 last:border-0">
                     <div className="w-10 h-10 bg-purple-50 rounded-full flex items-center justify-center text-xs font-bold text-purple-600">
                       {a.name.split(" ").map((n) => n[0]).join("")}
@@ -114,7 +144,7 @@ export default function TrendsRadarPage() {
               <h2 className="font-bold text-lg mb-1 flex items-center gap-2"><Music2 size={20} className="text-[var(--primary)]" /> Playlist Curators</h2>
               <p className="text-sm text-gray-500 mb-4">Active curators accepting submissions</p>
               <div className="space-y-3">
-                {playlistCurators.map((c) => (
+                {data.playlistCurators.map((c) => (
                   <div key={c.name} className="bg-gray-50 rounded-xl p-4">
                     <div className="flex items-center justify-between mb-2">
                       <div>
@@ -145,7 +175,7 @@ export default function TrendsRadarPage() {
             <h2 className="font-bold text-lg mb-1 flex items-center gap-2"><Target size={20} className="text-amber-500" /> Sync Opportunities</h2>
             <p className="text-sm text-gray-500 mb-4">Brands, shows, and games looking for music like yours</p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {syncOpportunities.map((s) => (
+              {data.syncOpportunities.map((s) => (
                 <div key={s.title} className="border border-gray-100 rounded-xl p-5 hover:border-[var(--primary)]/30 hover:shadow-sm transition-all">
                   <div className="flex items-center gap-2 mb-2">
                     {s.type === "Commercial" && <Tv size={16} className="text-blue-500" />}

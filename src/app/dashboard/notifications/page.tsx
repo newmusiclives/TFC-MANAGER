@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { apiGet, apiPatch } from "@/lib/api-client";
+import { requestNotificationPermission } from "@/lib/push-notifications";
 
 type NotificationCategory = "all" | "releases" | "analytics" | "tasks" | "system";
 
@@ -125,7 +126,7 @@ const initialNotifications: Notification[] = [
   {
     id: 10,
     title: "Subscription Renewal",
-    description: "Your TrueFans Manager Pro plan renews April 15 for $30/month. Link your TrueFans CONNECT account to get Pro free!",
+    description: "Your TrueFans MANAGER Pro plan renews April 15 for $30/month. Link your TrueFans CONNECT account to get Pro free!",
     time: "5 days ago",
     category: "system",
     read: true,
@@ -159,6 +160,16 @@ const iconMap: Record<string, React.ElementType> = {
 export default function NotificationsPage() {
   const [activeTab, setActiveTab] = useState<NotificationCategory>("all");
   const [notifications, setNotifications] = useState(initialNotifications);
+  const [pushStatus, setPushStatus] = useState<"default" | "granted" | "denied" | "unsupported">("default");
+
+  // Check current permission on mount
+  useEffect(() => {
+    if (typeof window !== "undefined" && "Notification" in window) {
+      setPushStatus(Notification.permission as "default" | "granted" | "denied");
+    } else {
+      setPushStatus("unsupported");
+    }
+  }, []);
 
   // Load notifications from API on mount
   useEffect(() => {
@@ -245,6 +256,39 @@ export default function NotificationsPage() {
         </div>
 
         <div className="p-8">
+          {/* Push Notification Banner */}
+          <div className="bg-white rounded-2xl border border-gray-100 p-5 mb-6 flex items-center justify-between">
+            <div>
+              <h3 className="font-semibold text-sm">Push Notifications</h3>
+              <p className="text-xs text-gray-500 mt-0.5">
+                {pushStatus === "granted"
+                  ? "Push notifications are enabled. You will receive alerts in real time."
+                  : pushStatus === "denied"
+                  ? "Push notifications are blocked. Enable them in your browser settings."
+                  : pushStatus === "unsupported"
+                  ? "Your browser does not support push notifications."
+                  : "Enable push notifications to get real-time alerts about your releases and stats."}
+              </p>
+            </div>
+            <button
+              disabled={pushStatus === "granted" || pushStatus === "unsupported"}
+              onClick={async () => {
+                const granted = await requestNotificationPermission();
+                setPushStatus(granted ? "granted" : "denied");
+              }}
+              className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors flex items-center gap-1.5 ${
+                pushStatus === "granted"
+                  ? "bg-green-50 text-green-700 cursor-default"
+                  : pushStatus === "denied" || pushStatus === "unsupported"
+                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                  : "bg-purple-600 text-white hover:bg-purple-700"
+              }`}
+            >
+              <Bell size={15} />
+              {pushStatus === "granted" ? "Enabled" : pushStatus === "denied" ? "Blocked" : "Enable Push Notifications"}
+            </button>
+          </div>
+
           {/* Category Tabs */}
           <div className="bg-white rounded-2xl border border-gray-100 p-1.5 flex gap-1 mb-6 w-fit">
             {categoryTabs.map((tab) => {

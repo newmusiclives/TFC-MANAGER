@@ -49,7 +49,7 @@ export default function AdminLogin() {
           </div>
           <h1 className="text-3xl font-bold text-white">Admin Panel</h1>
           <p className="text-gray-500 mt-2">
-            TrueFans Manager Administration
+            TrueFans MANAGER Administration
           </p>
         </div>
 
@@ -123,7 +123,7 @@ export default function AdminLogin() {
         </div>
 
         <p className="text-center text-gray-600 text-xs mt-6">
-          &copy; {new Date().getFullYear()} TrueFans Manager Admin
+          &copy; {new Date().getFullYear()} TrueFans MANAGER Admin
         </p>
       </div>
     </div>

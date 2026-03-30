@@ -1,7 +1,8 @@
 "use client";
 
 import DashboardSidebar from "@/components/DashboardSidebar";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { StatCardSkeleton, CardSkeleton } from "@/components/ui/Skeleton";
 import Link from "next/link";
 import {
   Music2,
@@ -254,6 +255,13 @@ function MiniSparkline({ data, up }: { data: number[]; up: boolean }) {
 
 export default function Dashboard() {
   const [showAiBanner, setShowAiBanner] = useState(true);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Simulate data fetch delay
+    const timer = setTimeout(() => setLoading(false), 600);
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
     <div className="flex min-h-screen bg-gray-50">
@@ -290,6 +298,24 @@ export default function Dashboard() {
         </div>
 
         <div className="p-8 space-y-8">
+          {loading ? (
+            <div className="space-y-8">
+              {/* Skeleton stats row */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <StatCardSkeleton key={i} />
+                ))}
+              </div>
+              {/* Skeleton cards */}
+              <CardSkeleton />
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-2"><CardSkeleton /></div>
+                <CardSkeleton />
+              </div>
+              <CardSkeleton />
+            </div>
+          ) : (
+          <>
           {/* AI Insight Banner */}
           {showAiBanner && (
             <div className="relative bg-gradient-to-r from-green-600 to-teal-500 rounded-2xl p-6 text-white overflow-hidden">
@@ -616,6 +642,8 @@ export default function Dashboard() {
               ))}
             </div>
           </div>
+          </>
+          )}
         </div>
       </main>
     </div>

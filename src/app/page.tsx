@@ -88,6 +88,11 @@ const aiFeatures = [
     title: "AI Competitive Intel",
     desc: "Know your landscape. Track similar artists, discover playlist opportunities, and benchmark your growth against peers.",
   },
+  {
+    icon: Search,
+    title: "SEO & AI Engine Optimization",
+    desc: "Optimize your presence for Google AND AI engines like ChatGPT and Perplexity. Get found by both humans and machines.",
+  },
 ];
 
 const steps = [
@@ -153,6 +158,7 @@ const featuresByTab: Record<
     { icon: Target, title: "Career Path", desc: "AI-generated milestone roadmap with actionable steps toward your goals." },
     { icon: Lightbulb, title: "Trends Radar", desc: "Stay ahead with real-time genre trends, viral sounds, and playlist movements." },
     { icon: Search, title: "Competitive Intel", desc: "Benchmark against peers, track similar artists, and find whitespace opportunities." },
+    { icon: Search, title: "SEO & AIEO", desc: "Comprehensive search engine and AI engine optimization. Structured data, keyword analysis, and AI visibility tracking." },
   ],
   business: [
     { icon: Wallet, title: "Earnings Dashboard", desc: "Track revenue from every source: streams, merch, sync, and live in one place." },
@@ -175,7 +181,7 @@ const testimonials = [
     name: "Yaya Mint\u00e9",
     genre: "Soul / Pop",
     quote:
-      "Thanks to TrueFans Manager, I was able to focus on music creation while benefiting from a complete and professional marketing plan. It changed everything.",
+      "Thanks to TrueFans MANAGER, I was able to focus on music creation while benefiting from a complete and professional marketing plan. It changed everything.",
     avatar: "YM",
   },
   {
@@ -268,7 +274,7 @@ export default function Home() {
       <Header />
 
       {/* ── Hero ──────────────────────────────────────────────── */}
-      <section className="pt-32 pb-20 px-4 bg-gradient-to-br from-gray-50 to-white">
+      <section className="hero-section pt-32 pb-20 px-4">
         <div className="max-w-5xl mx-auto text-center">
           <div className="inline-flex items-center gap-2 bg-[var(--primary)]/10 text-[var(--primary)] text-sm font-semibold px-4 py-1.5 rounded-full mb-6">
             <Sparkles size={16} />
@@ -281,11 +287,11 @@ export default function Home() {
               That Manages Your Music Career
             </span>
           </h1>
-          <p className="text-lg sm:text-xl text-gray-600 max-w-2xl mx-auto mb-4">
+          <p className="text-lg sm:text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto mb-4">
             Release plans, analytics, content, distribution, fan engagement,
             earnings &mdash; all powered by AI.
           </p>
-          <p className="text-gray-500 mb-10">
+          <p className="text-gray-500 dark:text-gray-500 mb-10">
             Everything independent artists need. Nothing they don&apos;t.
           </p>
           <div className="flex flex-col sm:flex-row justify-center gap-4">
@@ -298,7 +304,7 @@ export default function Home() {
             </Link>
             <a
               href="#features"
-              className="inline-flex items-center justify-center gap-2 border-2 border-gray-200 hover:border-gray-300 text-gray-700 font-semibold px-8 py-4 rounded-full text-lg transition-colors"
+              className="inline-flex items-center justify-center gap-2 border-2 border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600 text-gray-700 dark:text-gray-300 font-semibold px-8 py-4 rounded-full text-lg transition-colors"
             >
               Explore features
             </a>
@@ -307,7 +313,7 @@ export default function Home() {
       </section>
 
       {/* ── Trusted By Numbers ────────────────────────────────── */}
-      <section className="py-10 px-4 bg-white border-y border-gray-100">
+      <section className="py-10 px-4 bg-white dark:bg-[#111] border-y border-gray-100 dark:border-gray-800">
         <div className="max-w-5xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
           {[
             { value: "2,400+", label: "Artists" },
@@ -328,7 +334,7 @@ export default function Home() {
       </section>
 
       {/* ── AI-First Management ───────────────────────────────── */}
-      <section className="py-20 px-4 bg-gray-50">
+      <section className="py-20 px-4 bg-gray-50 dark:bg-[#0a0a0a]">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
             <div className="inline-flex items-center gap-2 bg-[var(--primary)]/10 text-[var(--primary)] text-sm font-semibold px-4 py-1.5 rounded-full mb-4">
@@ -339,7 +345,7 @@ export default function Home() {
               Your AI management team,
               <span className="text-[var(--primary)]"> always on</span>
             </h2>
-            <p className="text-gray-600 max-w-lg mx-auto">
+            <p className="text-gray-600 dark:text-gray-400 max-w-lg mx-auto">
               Seven AI-powered tools working around the clock so you can focus on
               making music.
             </p>
@@ -348,14 +354,14 @@ export default function Home() {
             {aiFeatures.map((f) => (
               <div
                 key={f.title}
-                className="flex gap-5 bg-white rounded-2xl p-6 border border-gray-100 hover:border-[var(--primary)]/30 hover:shadow-md transition-all"
+                className="flex gap-5 bg-white dark:bg-[#1a1a1a] rounded-2xl p-6 border border-gray-100 dark:border-gray-800 hover:border-[var(--primary)]/30 hover:shadow-md transition-all"
               >
                 <div className="w-12 h-12 bg-[var(--primary)]/10 rounded-xl flex items-center justify-center shrink-0">
                   <f.icon size={24} className="text-[var(--primary)]" />
                 </div>
                 <div>
                   <h3 className="font-bold text-lg mb-1">{f.title}</h3>
-                  <p className="text-gray-600 text-sm leading-relaxed">
+                  <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">
                     {f.desc}
                   </p>
                 </div>
@@ -366,13 +372,13 @@ export default function Home() {
       </section>
 
       {/* ── How It Works ──────────────────────────────────────── */}
-      <section className="py-20 px-4 bg-white">
+      <section className="py-20 px-4 bg-white dark:bg-[#111]">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-3xl sm:text-4xl font-bold mb-4">
               How it works
             </h2>
-            <p className="text-gray-600 max-w-lg mx-auto">
+            <p className="text-gray-600 dark:text-gray-400 max-w-lg mx-auto">
               From upload to action plan in minutes &mdash; not weeks.
             </p>
           </div>
@@ -380,7 +386,7 @@ export default function Home() {
             {steps.map((s) => (
               <div
                 key={s.step}
-                className="bg-gray-50 rounded-2xl p-8 text-center border border-gray-100 hover:shadow-lg transition-shadow"
+                className="bg-gray-50 dark:bg-[#1a1a1a] rounded-2xl p-8 text-center border border-gray-100 dark:border-gray-800 hover:shadow-lg transition-shadow"
               >
                 <div className="w-14 h-14 bg-[var(--primary)]/10 rounded-2xl flex items-center justify-center mx-auto mb-5">
                   <s.icon size={28} className="text-[var(--primary)]" />
@@ -389,7 +395,7 @@ export default function Home() {
                   STEP {s.step}
                 </div>
                 <h3 className="text-xl font-bold mb-3">{s.title}</h3>
-                <p className="text-gray-600 text-sm leading-relaxed">
+                <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">
                   {s.desc}
                 </p>
               </div>
@@ -399,13 +405,13 @@ export default function Home() {
       </section>
 
       {/* ── Complete Feature Suite (Tabbed) ───────────────────── */}
-      <section id="features" className="py-20 px-4 bg-gray-50">
+      <section id="features" className="py-20 px-4 bg-gray-50 dark:bg-[#0a0a0a]">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-3xl sm:text-4xl font-bold mb-4">
               Complete feature suite
             </h2>
-            <p className="text-gray-600 max-w-lg mx-auto">
+            <p className="text-gray-600 dark:text-gray-400 max-w-lg mx-auto">
               Everything you need to release, promote, analyze, monetize, and
               grow &mdash; in one platform.
             </p>
@@ -422,7 +428,7 @@ export default function Home() {
                   className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-colors ${
                     isActive
                       ? "bg-[var(--primary)] text-white"
-                      : "bg-white text-gray-600 border border-gray-200 hover:border-[var(--primary)]/40 hover:text-[var(--primary)]"
+                      : "bg-white dark:bg-[#1a1a1a] text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 hover:border-[var(--primary)]/40 hover:text-[var(--primary)]"
                   }`}
                 >
                   <tab.icon size={16} />
@@ -437,13 +443,13 @@ export default function Home() {
             {featuresByTab[activeTab].map((f) => (
               <div
                 key={f.title}
-                className="group rounded-2xl border border-gray-100 bg-white p-6 hover:border-[var(--primary)]/30 hover:shadow-md transition-all"
+                className="group rounded-2xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-[#1a1a1a] p-6 hover:border-[var(--primary)]/30 hover:shadow-md transition-all"
               >
                 <div className="w-12 h-12 bg-[var(--primary)]/10 rounded-xl flex items-center justify-center mb-4 group-hover:bg-[var(--primary)]/20 transition-colors">
                   <f.icon size={24} className="text-[var(--primary)]" />
                 </div>
                 <h3 className="font-bold text-lg mb-2">{f.title}</h3>
-                <p className="text-gray-600 text-sm leading-relaxed">
+                <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">
                   {f.desc}
                 </p>
               </div>
@@ -453,22 +459,22 @@ export default function Home() {
       </section>
 
       {/* ── Testimonials ──────────────────────────────────────── */}
-      <section id="testimonials" className="py-20 px-4 bg-white">
+      <section id="testimonials" className="py-20 px-4 bg-white dark:bg-[#111]">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-3xl sm:text-4xl font-bold mb-4">
               What artists say
             </h2>
-            <p className="text-gray-600 max-w-md mx-auto">
+            <p className="text-gray-600 dark:text-gray-400 max-w-md mx-auto">
               Join thousands of independent artists already growing with
-              TrueFans Manager.
+              TrueFans MANAGER.
             </p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
             {testimonials.map((t) => (
               <div
                 key={t.name}
-                className="bg-gray-50 rounded-2xl p-8 border border-gray-100"
+                className="bg-gray-50 dark:bg-[#1a1a1a] rounded-2xl p-8 border border-gray-100 dark:border-gray-800"
               >
                 <div className="flex items-center gap-3 mb-5">
                   <div className="w-11 h-11 bg-[var(--primary)] rounded-full flex items-center justify-center text-white font-bold text-sm">
@@ -479,7 +485,7 @@ export default function Home() {
                     <div className="text-xs text-gray-500">{t.genre}</div>
                   </div>
                 </div>
-                <p className="text-gray-600 text-sm leading-relaxed italic">
+                <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed italic">
                   &ldquo;{t.quote}&rdquo;
                 </p>
               </div>
@@ -489,19 +495,19 @@ export default function Home() {
       </section>
 
       {/* ── About ─────────────────────────────────────────────── */}
-      <section id="about" className="py-20 px-4 bg-gray-50">
+      <section id="about" className="py-20 px-4 bg-gray-50 dark:bg-[#0a0a0a]">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-3xl sm:text-4xl font-bold mb-4">
-              About TrueFans Manager
+              About TrueFans MANAGER
             </h2>
-            <p className="text-gray-600 max-w-lg mx-auto">
+            <p className="text-gray-600 dark:text-gray-400 max-w-lg mx-auto">
               Built by music industry veterans who understand what independent
               artists actually need.
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-            <div className="bg-white rounded-2xl p-8 border border-gray-100">
+            <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl p-8 border border-gray-100 dark:border-gray-800">
               <div className="w-16 h-16 bg-[var(--primary)] rounded-full flex items-center justify-center text-white font-bold text-xl mb-4">
                 AD
               </div>
@@ -517,10 +523,10 @@ export default function Home() {
               <blockquote className="mt-4 border-l-2 border-[var(--primary)] pl-4 text-sm text-gray-500 italic">
                 &ldquo;I&apos;ve met thousands of artists worldwide and I
                 understand their challenges. That&apos;s why we created TrueFans
-                Manager: to give them the support they need to succeed.&rdquo;
+                MANAGER: to give them the support they need to succeed.&rdquo;
               </blockquote>
             </div>
-            <div className="bg-white rounded-2xl p-8 border border-gray-100">
+            <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl p-8 border border-gray-100 dark:border-gray-800">
               <div className="w-16 h-16 bg-[var(--primary)] rounded-full flex items-center justify-center text-white font-bold text-xl mb-4">
                 TQ
               </div>
@@ -622,7 +628,7 @@ export default function Home() {
               >
                 TrueFans CONNECT
               </a>{" "}
-              subscription get <strong className="text-white">TrueFans Manager Pro ($30/mo) completely free</strong>.
+              subscription get <strong className="text-white">TrueFans MANAGER Pro ($30/mo) completely free</strong>.
               Link your account after signing up to activate.
             </p>
             <a

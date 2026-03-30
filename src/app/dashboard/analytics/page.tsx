@@ -13,7 +13,14 @@ import {
   Clock,
   Heart,
   Music2,
+  Zap,
+  Target,
+  ListMusic,
+  FileDown,
+  CalendarDays,
+  ArrowRight,
 } from "lucide-react";
+import { exportToCSV } from "@/lib/pdf-export";
 import { useState, useEffect } from "react";
 import {
   AreaChart,
@@ -106,6 +113,41 @@ const mockMetrics = [
 
 type Metric = { label: string; value: string; change: string; up: boolean; icon: React.ElementType; color: string };
 
+const mockAlerts = [
+  { id: 1, text: "You just hit 10K streams on Midnight Dreams", time: "2 hours ago", type: "milestone" as const },
+  { id: 2, text: "Monthly listeners up 15% this week", time: "5 hours ago", type: "growth" as const },
+  { id: 3, text: "New playlist placement detected: Chill Vibes (12.4K followers)", time: "1 day ago", type: "playlist" as const },
+  { id: 4, text: "Save rate on Electric Feel increased to 28%", time: "2 days ago", type: "growth" as const },
+];
+
+const mockPlaylistPlacements = [
+  { playlist: "Chill Vibes", platform: "Spotify", followers: "12.4K", track: "Midnight Dreams", estStreams: "3,200", addedDate: "Mar 22, 2026" },
+  { playlist: "Indie Electronic", platform: "Spotify", followers: "45.8K", track: "Midnight Dreams", estStreams: "8,100", addedDate: "Mar 10, 2026" },
+  { playlist: "New Music Friday", platform: "Apple Music", followers: "120K", track: "Electric Feel", estStreams: "15,400", addedDate: "Feb 28, 2026" },
+  { playlist: "Late Night Drives", platform: "Spotify", followers: "8.2K", track: "Summer Waves", estStreams: "1,800", addedDate: "Feb 15, 2026" },
+  { playlist: "Discover Weekly", platform: "Spotify", followers: "N/A", track: "Neon Lights", estStreams: "4,500", addedDate: "Jan 20, 2026" },
+];
+
+const mockProjectionData = [
+  { month: "Jan", actual: 8200, projected: null },
+  { month: "Feb", actual: 12100, projected: null },
+  { month: "Mar", actual: 18200, projected: null },
+  { month: "Apr", actual: null, projected: 22800 },
+  { month: "May", actual: null, projected: 28400 },
+  { month: "Jun", actual: null, projected: 34200 },
+  { month: "Jul", actual: null, projected: 41500 },
+  { month: "Aug", actual: null, projected: 50000 },
+];
+
+const mockCohorts = [
+  { month: "Oct 2025", discovered: 420, retained30d: 78, retained60d: 62, retained90d: 51 },
+  { month: "Nov 2025", discovered: 580, retained30d: 81, retained60d: 67, retained90d: 55 },
+  { month: "Dec 2025", discovered: 890, retained30d: 74, retained60d: 58, retained90d: 0 },
+  { month: "Jan 2026", discovered: 1240, retained30d: 82, retained60d: 0, retained90d: 0 },
+  { month: "Feb 2026", discovered: 1580, retained30d: 85, retained60d: 0, retained90d: 0 },
+  { month: "Mar 2026", discovered: 1920, retained30d: 0, retained60d: 0, retained90d: 0 },
+];
+
 export default function AnalyticsPage() {
   const [streamHistory, setStreamHistory] = useState(mockStreamHistory);
   const [platformBreakdown, setPlatformBreakdown] = useState(mockPlatformBreakdown);
@@ -132,6 +174,20 @@ export default function AnalyticsPage() {
     })();
   }, []);
 
+  const [exportToast, setExportToast] = useState(false);
+
+  const handleExport = () => {
+    // Build a flat array of analytics data for CSV export
+    const csvData = streamHistory.map((row) => ({
+      date: row.date,
+      streams: row.streams,
+      listeners: row.listeners,
+    }));
+    exportToCSV(csvData, "truefans-analytics-report.csv");
+    setExportToast(true);
+    setTimeout(() => setExportToast(false), 3000);
+  };
+
   return (
     <div className="flex min-h-screen bg-gray-50">
       <DashboardSidebar />
@@ -144,6 +200,12 @@ export default function AnalyticsPage() {
             </p>
           </div>
           <div className="flex items-center gap-3">
+            <button
+              onClick={handleExport}
+              className="inline-flex items-center gap-2 bg-[var(--primary)] hover:bg-[var(--primary-dark)] text-white font-medium text-sm px-4 py-2 rounded-lg transition-colors"
+            >
+              <FileDown size={16} /> Export Report
+            </button>
             <select className="text-sm bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 focus:outline-none">
               <option>Last 6 months</option>
               <option>Last 3 months</option>
@@ -156,7 +218,33 @@ export default function AnalyticsPage() {
           </div>
         </div>
 
+        {/* Export Toast */}
+        {exportToast && (
+          <div className="fixed top-6 right-6 z-50 bg-green-600 text-white px-5 py-3 rounded-xl shadow-lg flex items-center gap-2 animate-in fade-in slide-in-from-top-2">
+            <FileDown size={16} /> Report exported successfully
+          </div>
+        )}
+
         <div className="p-8">
+          {/* Real-time Alerts */}
+          <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl border border-blue-100 p-5 mb-8">
+            <div className="flex items-center gap-2 mb-3">
+              <Zap size={18} className="text-blue-600" />
+              <h2 className="font-bold text-sm text-blue-900">Recent Alerts</h2>
+            </div>
+            <div className="space-y-2">
+              {mockAlerts.map((alert) => (
+                <div key={alert.id} className="flex items-center justify-between bg-white/80 rounded-xl px-4 py-2.5">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-2 h-2 rounded-full ${alert.type === "milestone" ? "bg-green-500" : alert.type === "playlist" ? "bg-purple-500" : "bg-blue-500"}`} />
+                    <span className="text-sm text-gray-800">{alert.text}</span>
+                  </div>
+                  <span className="text-xs text-gray-400 shrink-0 ml-4">{alert.time}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
           {/* Key metrics */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             {metrics.map((m) => (
@@ -305,6 +393,151 @@ export default function AnalyticsPage() {
                 <span>Male: <strong className="text-gray-800">44%</strong></span>
                 <span>Other: <strong className="text-gray-800">4%</strong></span>
               </div>
+            </div>
+          </div>
+
+          {/* Predictive Analytics */}
+          <div className="bg-white rounded-2xl border border-gray-100 p-6 mt-6">
+            <div className="flex items-center gap-2 mb-1">
+              <Target size={20} className="text-[var(--primary)]" />
+              <h2 className="font-bold text-lg">Predictive Analytics</h2>
+            </div>
+            <p className="text-sm text-gray-500 mb-2">At your current growth rate, you&apos;ll reach <strong className="text-gray-900">50K monthly listeners</strong> by <strong className="text-gray-900">August 2026</strong></p>
+            <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-xl p-4 mb-4">
+              <div className="flex items-center gap-6 text-sm">
+                <div>
+                  <div className="text-gray-500">Current</div>
+                  <div className="font-bold text-lg text-gray-900">18.2K</div>
+                </div>
+                <ArrowRight size={20} className="text-gray-300" />
+                <div>
+                  <div className="text-gray-500">Projected (Aug)</div>
+                  <div className="font-bold text-lg text-[var(--primary)]">50K</div>
+                </div>
+                <div className="ml-auto">
+                  <div className="text-gray-500">Monthly Growth</div>
+                  <div className="font-bold text-lg text-green-600">+22.4%</div>
+                </div>
+              </div>
+            </div>
+            <ResponsiveContainer width="100%" height={240}>
+              <AreaChart data={mockProjectionData}>
+                <defs>
+                  <linearGradient id="sgActual" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#00c878" stopOpacity={0.15} />
+                    <stop offset="95%" stopColor="#00c878" stopOpacity={0.02} />
+                  </linearGradient>
+                  <linearGradient id="sgProjected" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#7c3aed" stopOpacity={0.15} />
+                    <stop offset="95%" stopColor="#7c3aed" stopOpacity={0.02} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
+                <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#9ca3af" }} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#9ca3af" }} tickFormatter={(v) => `${(v / 1000).toFixed(0)}K`} />
+                <Tooltip contentStyle={{ borderRadius: "12px", border: "1px solid #e5e7eb" }} />
+                <Area type="monotone" dataKey="actual" stroke="#00c878" strokeWidth={2} fill="url(#sgActual)" name="Actual" connectNulls={false} />
+                <Area type="monotone" dataKey="projected" stroke="#7c3aed" strokeWidth={2} strokeDasharray="6 3" fill="url(#sgProjected)" name="Projected" connectNulls={false} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* Playlist Tracking */}
+          <div className="bg-white rounded-2xl border border-gray-100 p-6 mt-6">
+            <div className="flex items-center gap-2 mb-1">
+              <ListMusic size={20} className="text-[var(--primary)]" />
+              <h2 className="font-bold text-lg">Playlist Tracking</h2>
+            </div>
+            <p className="text-sm text-gray-500 mb-4">Playlists where your tracks are currently featured</p>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-gray-100 bg-gray-50/60">
+                    <th className="text-left font-semibold text-gray-600 px-4 py-3">Playlist</th>
+                    <th className="text-left font-semibold text-gray-600 px-4 py-3">Platform</th>
+                    <th className="text-left font-semibold text-gray-600 px-4 py-3">Followers</th>
+                    <th className="text-left font-semibold text-gray-600 px-4 py-3">Track</th>
+                    <th className="text-left font-semibold text-gray-600 px-4 py-3">Est. Streams</th>
+                    <th className="text-left font-semibold text-gray-600 px-4 py-3">Added</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {mockPlaylistPlacements.map((p, idx) => (
+                    <tr key={idx} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
+                      <td className="px-4 py-3 font-medium text-gray-900">{p.playlist}</td>
+                      <td className="px-4 py-3">
+                        <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${p.platform === "Spotify" ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"}`}>
+                          {p.platform}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-gray-500">{p.followers}</td>
+                      <td className="px-4 py-3 text-gray-700">{p.track}</td>
+                      <td className="px-4 py-3 font-medium text-gray-900">{p.estStreams}</td>
+                      <td className="px-4 py-3 text-gray-500">{p.addedDate}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Cohort Analysis */}
+          <div className="bg-white rounded-2xl border border-gray-100 p-6 mt-6">
+            <div className="flex items-center gap-2 mb-1">
+              <CalendarDays size={20} className="text-[var(--primary)]" />
+              <h2 className="font-bold text-lg">Cohort Analysis</h2>
+            </div>
+            <p className="text-sm text-gray-500 mb-4">When did fans discover you &mdash; and how many stayed</p>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-gray-100 bg-gray-50/60">
+                    <th className="text-left font-semibold text-gray-600 px-4 py-3">Cohort</th>
+                    <th className="text-left font-semibold text-gray-600 px-4 py-3">New Listeners</th>
+                    <th className="text-left font-semibold text-gray-600 px-4 py-3">30-day Retention</th>
+                    <th className="text-left font-semibold text-gray-600 px-4 py-3">60-day Retention</th>
+                    <th className="text-left font-semibold text-gray-600 px-4 py-3">90-day Retention</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {mockCohorts.map((cohort, idx) => (
+                    <tr key={idx} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
+                      <td className="px-4 py-3 font-medium text-gray-900">{cohort.month}</td>
+                      <td className="px-4 py-3 text-gray-700">{cohort.discovered.toLocaleString()}</td>
+                      <td className="px-4 py-3">
+                        {cohort.retained30d > 0 ? (
+                          <div className="flex items-center gap-2">
+                            <div className="w-16 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                              <div className="h-full rounded-full bg-green-500" style={{ width: `${cohort.retained30d}%` }} />
+                            </div>
+                            <span className="text-xs font-semibold text-green-700">{cohort.retained30d}%</span>
+                          </div>
+                        ) : <span className="text-xs text-gray-300">--</span>}
+                      </td>
+                      <td className="px-4 py-3">
+                        {cohort.retained60d > 0 ? (
+                          <div className="flex items-center gap-2">
+                            <div className="w-16 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                              <div className="h-full rounded-full bg-blue-500" style={{ width: `${cohort.retained60d}%` }} />
+                            </div>
+                            <span className="text-xs font-semibold text-blue-700">{cohort.retained60d}%</span>
+                          </div>
+                        ) : <span className="text-xs text-gray-300">--</span>}
+                      </td>
+                      <td className="px-4 py-3">
+                        {cohort.retained90d > 0 ? (
+                          <div className="flex items-center gap-2">
+                            <div className="w-16 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                              <div className="h-full rounded-full bg-purple-500" style={{ width: `${cohort.retained90d}%` }} />
+                            </div>
+                            <span className="text-xs font-semibold text-purple-700">{cohort.retained90d}%</span>
+                          </div>
+                        ) : <span className="text-xs text-gray-300">--</span>}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
         </div>

@@ -1,18 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { registerUser, loginUser, COOKIE_NAME } from "@/lib/services/auth-service";
+import { validateRegister } from "@/lib/validation";
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { email, password, name, artistName } = body;
 
-    if (!email || !password || !name) {
-      return NextResponse.json(
-        { error: "Email, password, and name are required" },
-        { status: 400 }
-      );
+    const validation = validateRegister(body);
+    if (!validation.success) {
+      return NextResponse.json({ error: validation.error }, { status: 400 });
     }
 
+    const { email, password, name, artistName } = validation.data;
     const user = await registerUser(email, password, name, artistName);
 
     // Log the user in immediately after registration

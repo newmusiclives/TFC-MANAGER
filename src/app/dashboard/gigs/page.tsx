@@ -193,13 +193,17 @@ export default function GigsPage() {
   const [shows, setShows] = useState<Show[]>(upcomingShows);
   const [past, setPast] = useState(pastShows);
 
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
-    apiGet<{ upcoming: Show[]; past: typeof pastShows }>("/api/gigs")
+    apiGet<{ gigs?: Show[]; upcoming?: Show[]; past?: typeof pastShows }>("/api/gigs")
       .then((d) => {
         if (d.upcoming) setShows(d.upcoming);
+        else if (d.gigs) setShows(d.gigs as Show[]);
         if (d.past) setPast(d.past);
       })
-      .catch(() => {/* keep mock data */});
+      .catch(() => {/* keep mock data */})
+      .finally(() => setLoading(false));
   }, []);
 
   const addShow = async (gigData: Partial<Show>) => {
@@ -242,6 +246,11 @@ export default function GigsPage() {
         </div>
 
         <div className="p-8">
+          {loading && (
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-spin w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full" />
+            </div>
+          )}
           {/* Stats */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             {[

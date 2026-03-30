@@ -25,64 +25,136 @@ const categories = [
 ];
 
 const featuredArticle = {
-  title: "The Complete Guide to Releasing a Single in 2026",
+  title: "How to Get on Spotify Editorial Playlists in 2026",
   excerpt:
-    "Everything you need to know about planning, distributing, and promoting your next single — from pre-save campaigns to playlist pitching and beyond.",
-  date: "Mar 20, 2026",
-  readTime: "8 min read",
-  category: "Strategy",
+    "Spotify editorial playlists remain one of the most powerful growth drivers for independent artists. We break down the submission process, what editorial curators actually look for, optimal timing, and the metadata strategies that increase your chances of landing a placement.",
+  date: "Mar 25, 2026",
+  readTime: "10 min read",
+  category: "Playlists",
+  author: "Jordan Ellis",
   href: "#",
 };
 
 const articles = [
   {
-    title: "How AI is Changing Music Marketing for Independent Artists",
+    title: "The Complete Guide to Music Sync Licensing",
     excerpt:
-      "Discover how artificial intelligence tools are leveling the playing field for indie musicians in promotion, analytics, and fan engagement.",
-    date: "Mar 15, 2026",
-    readTime: "6 min read",
-    category: "AI & Tech",
-    gradient: "from-violet-500 to-purple-600",
-    href: "#",
-  },
-  {
-    title: "5 Playlist Pitching Mistakes That Kill Your Chances",
-    excerpt:
-      "Avoid these common errors when submitting your tracks to editorial and independent playlist curators.",
-    date: "Mar 8, 2026",
-    readTime: "5 min read",
-    category: "Playlists",
-    gradient: "from-emerald-500 to-teal-600",
-    href: "#",
-  },
-  {
-    title: "Building a Superfan Community: From 0 to 1,000 True Fans",
-    excerpt:
-      "A practical roadmap for cultivating dedicated supporters who will champion your music and sustain your career.",
-    date: "Feb 28, 2026",
-    readTime: "7 min read",
-    category: "Fan Growth",
-    gradient: "from-orange-500 to-red-500",
-    href: "#",
-  },
-  {
-    title: "Understanding Music Royalties: A Simple Guide",
-    excerpt:
-      "Break down the complex world of mechanical, performance, and sync royalties into clear, actionable knowledge.",
-    date: "Feb 20, 2026",
-    readTime: "6 min read",
+      "Sync licensing is one of the most lucrative revenue streams for independent artists. Learn how to get your music placed in TV shows, films, ads, and video games — from building a sync-ready catalog to pitching music supervisors.",
+    date: "Mar 22, 2026",
+    readTime: "12 min read",
     category: "Business",
+    author: "Mia Torres",
     gradient: "from-blue-500 to-cyan-600",
     href: "#",
   },
   {
-    title: "Social Media Content Calendar: What to Post and When",
+    title: "Building a Fan CRM: Why Every Artist Needs One",
     excerpt:
-      "Plan your social media strategy with this week-by-week content framework designed for musicians.",
-    date: "Feb 12, 2026",
-    readTime: "5 min read",
-    category: "Marketing",
+      "Your email list and fan database are assets no algorithm can take away. Discover how to build, segment, and engage a fan CRM that turns casual listeners into superfans who buy merch, attend shows, and fund your next project.",
+    date: "Mar 18, 2026",
+    readTime: "8 min read",
+    category: "Fan Growth",
+    author: "Alex Rivera",
+    gradient: "from-orange-500 to-red-500",
+    href: "#",
+  },
+  {
+    title: "AI in Music: How Independent Artists Are Using AI Managers",
+    excerpt:
+      "From automated playlist pitching to AI-generated release strategies, independent artists are using artificial intelligence to compete with major-label resources. We explore real workflows and the tools reshaping the indie music landscape.",
+    date: "Mar 14, 2026",
+    readTime: "9 min read",
+    category: "AI & Tech",
+    author: "Priya Sharma",
+    gradient: "from-violet-500 to-purple-600",
+    href: "#",
+  },
+  {
+    title: "Revenue Splits Explained: A Guide for Collaborators",
+    excerpt:
+      "Collaborations are essential to growth, but unclear revenue splits cause more disputes than any other issue in music. This guide covers how to structure fair splits, what contracts to use, and tools that automate the process.",
+    date: "Mar 10, 2026",
+    readTime: "7 min read",
+    category: "Business",
+    author: "Marcus Hall",
+    gradient: "from-emerald-500 to-teal-600",
+    href: "#",
+  },
+  {
+    title: "The Art of the Release Rollout: A 6-Week Plan",
+    excerpt:
+      "A single release is not just the day your track goes live — it is a 6-week campaign. We lay out a week-by-week plan covering teasers, pre-saves, influencer seeding, launch day tactics, and post-release momentum strategies.",
+    date: "Mar 6, 2026",
+    readTime: "11 min read",
+    category: "Strategy",
+    author: "Jordan Ellis",
     gradient: "from-pink-500 to-rose-600",
+    href: "#",
+  },
+  {
+    title: "Understanding Your Streaming Royalties",
+    excerpt:
+      "How much does Spotify actually pay per stream in 2026? What about Apple Music, Tidal, and YouTube Music? We break down per-stream rates, how royalties are calculated, and strategies to maximize your streaming income as an independent artist.",
+    date: "Feb 28, 2026",
+    readTime: "8 min read",
+    category: "Business",
+    author: "Mia Torres",
+    gradient: "from-amber-500 to-orange-600",
+    href: "#",
+  },
+  {
+    title: "Social Media Strategy for Musicians: Platform-by-Platform Guide",
+    excerpt:
+      "Each social platform has different algorithms, audiences, and content formats. This guide covers what works on Instagram, TikTok, YouTube Shorts, and Twitter/X in 2026, with specific posting schedules and content ideas for musicians.",
+    date: "Feb 22, 2026",
+    readTime: "10 min read",
+    category: "Marketing",
+    author: "Alex Rivera",
+    gradient: "from-sky-500 to-blue-600",
+    href: "#",
+  },
+  {
+    title: "How to Pitch Your Music to Playlist Curators",
+    excerpt:
+      "Beyond Spotify editorial, thousands of independent curators control playlists with millions of followers. Learn how to find the right curators, write pitches that get responses, and build lasting relationships that lead to repeat placements.",
+    date: "Feb 15, 2026",
+    readTime: "7 min read",
+    category: "Playlists",
+    author: "Priya Sharma",
+    gradient: "from-green-500 to-emerald-600",
+    href: "#",
+  },
+  {
+    title: "Music Contract Red Flags: What to Watch For",
+    excerpt:
+      "Before you sign anything, learn to spot the clauses that could cost you your masters, your publishing, or years of creative freedom. A music attorney breaks down the 10 most common contract traps facing independent artists in 2026.",
+    date: "Feb 8, 2026",
+    readTime: "9 min read",
+    category: "Business",
+    author: "Marcus Hall",
+    gradient: "from-red-500 to-rose-600",
+    href: "#",
+  },
+  {
+    title: "Fan Funding vs. Traditional Labels: Pros and Cons",
+    excerpt:
+      "With platforms like Patreon, Kickstarter, and direct fan subscriptions, artists have more funding options than ever. We compare fan-funded models to traditional label deals, examining creative control, revenue splits, and long-term career impact.",
+    date: "Feb 1, 2026",
+    readTime: "8 min read",
+    category: "Fan Growth",
+    author: "Jordan Ellis",
+    gradient: "from-indigo-500 to-violet-600",
+    href: "#",
+  },
+  {
+    title: "The Independent Artist's Guide to Touring in 2026",
+    excerpt:
+      "Touring without a booking agent or label support is challenging but entirely possible. This guide covers routing strategies, venue outreach, budgeting for DIY tours, merch optimization, and how to use data analytics to pick the right cities.",
+    date: "Jan 24, 2026",
+    readTime: "11 min read",
+    category: "Strategy",
+    author: "Mia Torres",
+    gradient: "from-teal-500 to-cyan-600",
     href: "#",
   },
 ];
@@ -112,7 +184,7 @@ export default function BlogPage() {
             </span>
           </div>
           <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-            TrueFans Manager{" "}
+            TrueFans MANAGER{" "}
             <span className="text-[var(--primary)]">
               Blog
             </span>
@@ -168,6 +240,9 @@ export default function BlogPage() {
                       {featuredArticle.excerpt}
                     </p>
                     <div className="flex items-center gap-4 text-sm text-gray-500">
+                      <span className="font-medium text-gray-700">
+                        {featuredArticle.author}
+                      </span>
                       <span className="flex items-center gap-1">
                         <Calendar className="w-4 h-4" />
                         {featuredArticle.date}
@@ -220,6 +295,9 @@ export default function BlogPage() {
                     </p>
                     <div className="flex items-center justify-between text-xs text-gray-500">
                       <div className="flex items-center gap-3">
+                        <span className="font-medium text-gray-600">
+                          {article.author}
+                        </span>
                         <span className="flex items-center gap-1">
                           <Calendar className="w-3.5 h-3.5" />
                           {article.date}

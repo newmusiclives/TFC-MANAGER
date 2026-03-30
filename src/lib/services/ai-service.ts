@@ -60,7 +60,7 @@ export async function generateContent(
     return getMockContent(type);
   }
 
-  const systemPrompt = `You are an expert music marketing AI working inside TrueFans Manager, a platform for independent artists. You understand streaming algorithms, fan engagement, social media trends, and the music industry inside out.
+  const systemPrompt = `You are an expert music marketing AI working inside TrueFans MANAGER, a platform for independent artists. You understand streaming algorithms, fan engagement, social media trends, and the music industry inside out.
 
 When generating content you MUST:
 - Be authentic and avoid generic corporate language
@@ -178,7 +178,7 @@ export async function generateReleasePlan(params: {
     return getMockReleasePlan();
   }
 
-  const systemPrompt = `You are a senior music release strategist at TrueFans Manager. You build detailed, phased release plans for independent artists that rival what major-label marketing teams produce.
+  const systemPrompt = `You are a senior music release strategist at TrueFans MANAGER. You build detailed, phased release plans for independent artists that rival what major-label marketing teams produce.
 
 Return ONLY valid JSON matching this schema:
 {
@@ -294,7 +294,7 @@ export async function analyzeContract(
     };
   }
 
-  const systemPrompt = `You are a music industry contract attorney and advisor at TrueFans Manager. You analyze recording contracts, publishing deals, management agreements, and other music industry legal documents for independent artists.
+  const systemPrompt = `You are a music industry contract attorney and advisor at TrueFans MANAGER. You analyze recording contracts, publishing deals, management agreements, and other music industry legal documents for independent artists.
 
 Identify every significant clause, assess its risk to the artist (low/medium/high/critical), and provide a plain-English explanation with an actionable recommendation.
 
@@ -346,7 +346,7 @@ export async function generateWeeklyReport(userData: {
 <p><em>Configure your ANTHROPIC_API_KEY for a personalized AI-generated report.</em></p>`;
   }
 
-  const systemPrompt = `You are a music manager AI at TrueFans Manager. Write a concise, actionable weekly report in HTML format for an independent artist. Include:
+  const systemPrompt = `You are a music manager AI at TrueFans MANAGER. Write a concise, actionable weekly report in HTML format for an independent artist. Include:
 1. Performance highlights
 2. Key metrics summary
 3. 2-3 specific action items for the coming week
@@ -390,7 +390,7 @@ export async function generateStoryboard(params: {
     };
   }
 
-  const systemPrompt = `You are a music video creative director at TrueFans Manager. Generate detailed storyboards for music videos that independent artists can execute on a budget.
+  const systemPrompt = `You are a music video creative director at TrueFans MANAGER. Generate detailed storyboards for music videos that independent artists can execute on a budget.
 
 Return ONLY valid JSON:
 {
@@ -434,10 +434,10 @@ export async function chatWithManager(
   }
 ): Promise<string> {
   if (IS_MOCK) {
-    return "I'm your AI manager at TrueFans Manager. To unlock personalized advice, please configure the ANTHROPIC_API_KEY in your environment. In the meantime, feel free to explore the platform's features!";
+    return "I'm your AI manager at TrueFans MANAGER. To unlock personalized advice, please configure the ANTHROPIC_API_KEY in your environment. In the meantime, feel free to explore the platform's features!";
   }
 
-  const systemPrompt = `You are the AI Manager inside TrueFans Manager — a smart, experienced, and supportive music industry manager for independent artists. You have deep knowledge of:
+  const systemPrompt = `You are the AI Manager inside TrueFans MANAGER — a smart, experienced, and supportive music industry manager for independent artists. You have deep knowledge of:
 - Music marketing, release strategy, and fan engagement
 - Streaming platform algorithms and playlist pitching
 - Social media growth tactics for musicians
@@ -515,7 +515,7 @@ export async function analyzeSoundProfile(metadata: {
     };
   }
 
-  const systemPrompt = `You are a music data analyst and A&R specialist at TrueFans Manager. Analyze audio metadata and provide insights on playlist readiness, actionable improvement suggestions, and similar commercially successful tracks.
+  const systemPrompt = `You are a music data analyst and A&R specialist at TrueFans MANAGER. Analyze audio metadata and provide insights on playlist readiness, actionable improvement suggestions, and similar commercially successful tracks.
 
 Return ONLY valid JSON:
 {

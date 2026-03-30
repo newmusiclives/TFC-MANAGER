@@ -2,11 +2,21 @@ import { NextRequest, NextResponse } from "next/server";
 import { getUserFromRequest } from "@/lib/services/auth-service";
 import { chatWithManager } from "@/lib/services/ai-service";
 import prisma from "@/lib/prisma";
+import { rateLimit } from "@/lib/rate-limit";
 
 export async function POST(request: NextRequest) {
   const user = await getUserFromRequest(request);
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  // Rate limit: 20 requests per minute per user
+  const rl = rateLimit(`ai-chat:${user.id}`, 20, 60_000);
+  if (!rl.success) {
+    return NextResponse.json(
+      { error: "Too many requests. Please wait a moment before trying again." },
+      { status: 429 }
+    );
   }
 
   try {

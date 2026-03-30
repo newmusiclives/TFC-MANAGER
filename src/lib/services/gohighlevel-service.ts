@@ -85,7 +85,7 @@ export async function syncContactToGHL(params: {
     email: params.email,
     firstName,
     lastName,
-    source: "TrueFans Manager",
+    source: "TrueFans MANAGER",
   };
 
   if (params.phone) payload.phone = params.phone;
@@ -232,7 +232,7 @@ export async function sendEmail(params: {
     contactId: params.contactId,
     subject: params.subject,
     html: params.htmlBody,
-    emailFrom: params.fromName ?? "TrueFans Manager",
+    emailFrom: params.fromName ?? "TrueFans MANAGER",
   });
 }
 

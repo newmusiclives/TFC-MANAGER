@@ -18,6 +18,12 @@ import {
   MoreHorizontal,
   CheckCircle2,
   XCircle,
+  ArrowRight,
+  Zap,
+  Crown,
+  ToggleLeft,
+  ToggleRight,
+  Award,
 } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { apiGet, apiPost } from "@/lib/api-client";
@@ -119,10 +125,37 @@ function sourceLabel(source: string) {
   }
 }
 
+type CRMTab = "subscribers" | "fan-journey" | "automation" | "vip-tiers";
+
+const mockFunnelStages = [
+  { stage: "Discovery", count: 8400, color: "bg-blue-500", pct: 100 },
+  { stage: "First Listen", count: 5200, color: "bg-purple-500", pct: 62 },
+  { stage: "Follow", count: 2800, color: "bg-indigo-500", pct: 33 },
+  { stage: "Engaged", count: 1240, color: "bg-green-500", pct: 15 },
+  { stage: "Superfan", count: 340, color: "bg-amber-500", pct: 4 },
+];
+
+const mockAutomationRules = [
+  { id: "a1", name: "Tag VIP fans", trigger: "Engagement score > 80", action: "Add tag: VIP", enabled: true },
+  { id: "a2", name: "Welcome new subscribers", trigger: "New subscriber joins", action: "Send welcome email", enabled: true },
+  { id: "a3", name: "Re-engage inactive fans", trigger: "No activity for 30 days", action: "Send re-engagement email", enabled: false },
+  { id: "a4", name: "Superfan alert", trigger: "Engagement score > 95", action: "Send Slack notification + add to Superfan list", enabled: true },
+  { id: "a5", name: "Birthday reward", trigger: "Fan birthday (if known)", action: "Send personalized birthday message", enabled: false },
+];
+
+const mockVIPTiers = [
+  { tier: "Platinum", minScore: 95, color: "bg-gradient-to-r from-gray-300 to-gray-100", textColor: "text-gray-800", borderColor: "border-gray-300", count: 3, icon: Crown },
+  { tier: "Gold", minScore: 80, color: "bg-gradient-to-r from-amber-200 to-amber-100", textColor: "text-amber-800", borderColor: "border-amber-300", count: 4, icon: Award },
+  { tier: "Silver", minScore: 60, color: "bg-gradient-to-r from-slate-200 to-slate-100", textColor: "text-slate-700", borderColor: "border-slate-300", count: 3, icon: Star },
+  { tier: "Bronze", minScore: 40, color: "bg-gradient-to-r from-orange-200 to-orange-100", textColor: "text-orange-800", borderColor: "border-orange-300", count: 5, icon: Users },
+];
+
 export default function FanCRMPage() {
   const [activeSegment, setActiveSegment] = useState<Segment>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [subscribers, setSubscribers] = useState<Subscriber[]>(mockSubscribers);
+  const [activeTab, setActiveTab] = useState<CRMTab>("subscribers");
+  const [automationRules, setAutomationRules] = useState(mockAutomationRules);
 
   const fetchSubscribers = useCallback(async (segment?: Segment, search?: string) => {
     try {
@@ -214,6 +247,161 @@ export default function FanCRMPage() {
             ))}
           </div>
 
+          {/* Tabs */}
+          <div className="flex items-center gap-1 mb-6 bg-white rounded-xl border border-gray-100 p-1 w-fit">
+            {([
+              { key: "subscribers" as CRMTab, label: "Subscribers" },
+              { key: "fan-journey" as CRMTab, label: "Fan Journey" },
+              { key: "automation" as CRMTab, label: "Automation Rules" },
+              { key: "vip-tiers" as CRMTab, label: "VIP Tiers" },
+            ]).map((tab) => (
+              <button
+                key={tab.key}
+                onClick={() => setActiveTab(tab.key)}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  activeTab === tab.key
+                    ? "bg-[var(--primary)] text-white"
+                    : "text-gray-600 hover:bg-gray-100"
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Fan Journey Tab */}
+          {activeTab === "fan-journey" && (
+            <div className="bg-white rounded-2xl border border-gray-100 p-6 mb-6">
+              <h2 className="font-bold text-lg mb-1">Fan Journey Pipeline</h2>
+              <p className="text-sm text-gray-500 mb-6">How fans move through your engagement funnel</p>
+              <div className="space-y-4">
+                {mockFunnelStages.map((stage, idx) => (
+                  <div key={stage.stage} className="flex items-center gap-4">
+                    <div className="w-28 shrink-0 text-sm font-medium text-gray-700">{stage.stage}</div>
+                    <div className="flex-1 relative">
+                      <div className="h-10 bg-gray-100 rounded-xl overflow-hidden">
+                        <div
+                          className={`h-full ${stage.color} rounded-xl flex items-center justify-end pr-3 transition-all`}
+                          style={{ width: `${Math.max(stage.pct, 8)}%` }}
+                        >
+                          <span className="text-xs font-bold text-white">{stage.count.toLocaleString()}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="w-12 text-right text-sm font-semibold text-gray-500">{stage.pct}%</div>
+                    {idx < mockFunnelStages.length - 1 && (
+                      <ArrowRight size={16} className="text-gray-300 absolute -right-6 hidden" />
+                    )}
+                  </div>
+                ))}
+              </div>
+              <div className="mt-6 p-4 bg-blue-50 rounded-xl">
+                <p className="text-sm text-blue-800">
+                  <strong>Insight:</strong> Your Discovery-to-Follow conversion rate is <strong>33%</strong>, which is above the indie average of 25%. Focus on converting Followers to Engaged fans with exclusive content and direct outreach.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Automation Rules Tab */}
+          {activeTab === "automation" && (
+            <div className="bg-white rounded-2xl border border-gray-100 p-6 mb-6">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h2 className="font-bold text-lg">Automation Rules</h2>
+                  <p className="text-sm text-gray-500">Automate fan engagement based on triggers</p>
+                </div>
+                <button className="inline-flex items-center gap-2 bg-[var(--primary)] hover:bg-[var(--primary-dark)] text-white font-medium text-sm px-4 py-2 rounded-lg transition-colors">
+                  <Zap size={14} /> Add Rule
+                </button>
+              </div>
+              <div className="space-y-3">
+                {automationRules.map((rule) => (
+                  <div key={rule.id} className="border border-gray-100 rounded-xl p-4 flex items-center justify-between hover:bg-gray-50/50 transition-colors">
+                    <div className="flex items-center gap-4">
+                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${rule.enabled ? "bg-green-50" : "bg-gray-100"}`}>
+                        <Zap size={18} className={rule.enabled ? "text-green-600" : "text-gray-400"} />
+                      </div>
+                      <div>
+                        <div className="font-medium text-sm">{rule.name}</div>
+                        <div className="text-xs text-gray-500 mt-0.5">
+                          <span className="text-gray-400">When:</span> {rule.trigger} <span className="text-gray-300 mx-1">|</span> <span className="text-gray-400">Then:</span> {rule.action}
+                        </div>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setAutomationRules((prev) => prev.map((r) => r.id === rule.id ? { ...r, enabled: !r.enabled } : r))}
+                      className="p-1"
+                    >
+                      {rule.enabled ? (
+                        <ToggleRight size={28} className="text-green-600" />
+                      ) : (
+                        <ToggleLeft size={28} className="text-gray-300" />
+                      )}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* VIP Tiers Tab */}
+          {activeTab === "vip-tiers" && (
+            <div className="mb-6">
+              <h2 className="font-bold text-lg mb-1">VIP Tiers</h2>
+              <p className="text-sm text-gray-500 mb-4">Fan loyalty tiers based on engagement score</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {mockVIPTiers.map((tier) => (
+                  <div key={tier.tier} className={`${tier.color} rounded-2xl border ${tier.borderColor} p-5`}>
+                    <div className="flex items-center gap-2 mb-3">
+                      <tier.icon size={20} className={tier.textColor} />
+                      <h3 className={`font-bold text-lg ${tier.textColor}`}>{tier.tier}</h3>
+                    </div>
+                    <div className={`text-3xl font-bold ${tier.textColor}`}>{tier.count}</div>
+                    <div className="text-sm text-gray-600 mt-1">Score {tier.minScore}+</div>
+                    <div className="mt-3 pt-3 border-t border-white/50">
+                      <div className="text-xs text-gray-600">
+                        {tier.tier === "Platinum" && "Top fans, early access, merch discounts"}
+                        {tier.tier === "Gold" && "Priority support, exclusive content"}
+                        {tier.tier === "Silver" && "Newsletter perks, fan wall access"}
+                        {tier.tier === "Bronze" && "Basic engagement rewards"}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="bg-white rounded-2xl border border-gray-100 p-6 mt-4">
+                <h3 className="font-semibold text-sm mb-3">Fans by Tier</h3>
+                <div className="space-y-2">
+                  {mockVIPTiers.map((tier) => {
+                    const fans = subscribers.filter((s) => {
+                      if (tier.tier === "Platinum") return s.engagement >= 95;
+                      if (tier.tier === "Gold") return s.engagement >= 80 && s.engagement < 95;
+                      if (tier.tier === "Silver") return s.engagement >= 60 && s.engagement < 80;
+                      return s.engagement >= 40 && s.engagement < 60;
+                    });
+                    return (
+                      <div key={tier.tier} className="flex items-center gap-3">
+                        <span className="text-sm font-medium w-20">{tier.tier}</span>
+                        <div className="flex -space-x-2">
+                          {fans.slice(0, 5).map((f) => (
+                            <div key={f.email} className="w-7 h-7 rounded-full bg-gradient-to-br from-[var(--primary)] to-emerald-300 flex items-center justify-center text-white text-[10px] font-bold border-2 border-white">
+                              {f.name.split(" ").map((n) => n[0]).join("")}
+                            </div>
+                          ))}
+                        </div>
+                        {fans.length > 0 && <span className="text-xs text-gray-400">{fans.map((f) => f.name).join(", ")}</span>}
+                        {fans.length === 0 && <span className="text-xs text-gray-300">No subscribers in mock data</span>}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Toolbar: Segments + Search + Actions (original Subscribers tab) */}
+          {activeTab === "subscribers" && <>
           {/* Toolbar: Segments + Search + Actions */}
           <div className="bg-white rounded-2xl border border-gray-100 p-4 mb-6 flex flex-col lg:flex-row lg:items-center gap-4">
             {/* Segment filters */}
@@ -394,6 +582,7 @@ export default function FanCRMPage() {
               </button>
             </div>
           </div>
+          </>}
         </div>
       </main>
     </div>

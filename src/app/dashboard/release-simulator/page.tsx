@@ -3,7 +3,8 @@
 import DashboardSidebar from "@/components/DashboardSidebar";
 import { Bell, FlaskConical, Play, Users, DollarSign, Calendar, TrendingUp, ArrowUpRight, ArrowDownRight, Zap, BarChart3, Target, Clock } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
+import { apiPost } from "@/lib/api-client";
 
 export default function ReleaseSimulatorPage() {
   const [releaseDay, setReleaseDay] = useState("friday");
@@ -13,7 +14,8 @@ export default function ReleaseSimulatorPage() {
   const [hasPressPitch, setHasPressPitch] = useState(true);
   const [hasMusicVideo, setHasMusicVideo] = useState(false);
 
-  const simulation = useMemo(() => {
+  // Local simulation fallback
+  const localSimulation = useMemo(() => {
     let baseStreams = 3200;
     const dayMultiplier: Record<string, number> = { friday: 1.0, thursday: 0.88, wednesday: 0.75, saturday: 0.82, monday: 0.65 };
     baseStreams *= dayMultiplier[releaseDay] || 1;
@@ -37,6 +39,25 @@ export default function ReleaseSimulatorPage() {
 
     return { projectedWeeks, totalStreams, peakWeek, revenue, newListeners, playlistProb };
   }, [releaseDay, marketingBudget, prePromoWeeks, hasPlaylistPitch, hasPressPitch, hasMusicVideo]);
+
+  const [apiSimulation, setApiSimulation] = useState<typeof localSimulation | null>(null);
+  const [simLoading, setSimLoading] = useState(false);
+
+  const runApiSimulation = useCallback(async () => {
+    setSimLoading(true);
+    try {
+      const result = await apiPost<typeof localSimulation>("/api/release-simulator", {
+        releaseDay, marketingBudget, prePromoWeeks, hasPlaylistPitch, hasPressPitch, hasMusicVideo,
+      });
+      if (result) setApiSimulation(result);
+    } catch {
+      // Use local simulation as fallback
+    } finally {
+      setSimLoading(false);
+    }
+  }, [releaseDay, marketingBudget, prePromoWeeks, hasPlaylistPitch, hasPressPitch, hasMusicVideo]);
+
+  const simulation = apiSimulation ?? localSimulation;
 
   return (
     <div className="flex min-h-screen bg-gray-50">
@@ -111,6 +132,19 @@ export default function ReleaseSimulatorPage() {
                     </label>
                   </div>
                 </div>
+
+                <button
+                  onClick={runApiSimulation}
+                  disabled={simLoading}
+                  className="w-full mt-4 flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white font-medium text-sm px-4 py-2.5 rounded-xl transition-colors"
+                >
+                  {simLoading ? (
+                    <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
+                  ) : (
+                    <FlaskConical size={16} />
+                  )}
+                  {simLoading ? "Simulating..." : "Run AI Simulation"}
+                </button>
               </div>
 
               <div className="bg-gradient-to-br from-purple-600 to-indigo-700 rounded-2xl p-6 text-white">

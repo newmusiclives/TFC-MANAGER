@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getUserFromRequest } from "@/lib/services/auth-service";
 import prisma from "@/lib/prisma";
+import { validateRelease } from "@/lib/validation";
 
 // ---------------------------------------------------------------------------
 // GET /api/releases — List releases with pagination & filters
@@ -69,22 +70,13 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { title, type, releaseDate, genre } = body;
 
-    if (!title || typeof title !== "string") {
-      return NextResponse.json(
-        { error: "Title is required" },
-        { status: 400 }
-      );
+    const validation = validateRelease(body);
+    if (!validation.success) {
+      return NextResponse.json({ error: validation.error }, { status: 400 });
     }
 
-    const validTypes = ["SINGLE", "EP", "ALBUM"];
-    if (type && !validTypes.includes(type)) {
-      return NextResponse.json(
-        { error: `Type must be one of: ${validTypes.join(", ")}` },
-        { status: 400 }
-      );
-    }
+    const { title, type, releaseDate, genre } = validation.data;
 
     const release = await prisma.release.create({
       data: {

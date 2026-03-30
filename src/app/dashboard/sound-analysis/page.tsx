@@ -27,11 +27,15 @@ import {
   Star,
   Play,
   CalendarDays,
+  Zap,
+  Radio,
+  Hash,
 } from "lucide-react";
-import { useState, useEffect } from "react";
-import { apiPost } from "@/lib/api-client";
+import { useState, useEffect, useRef } from "react";
+import { apiGet, apiPost } from "@/lib/api-client";
+import { analyzeAudioFile, type AudioFeatures } from "@/lib/services/audio-analysis-service";
 
-/* ───── mock data ───── */
+/* ───── mock data (fallback) ───── */
 
 const waveformBars = Array.from({ length: 72 }, (_, i) => {
   const x = i / 72;
@@ -144,6 +148,12 @@ function CircularScore({ score, size = 120 }: { score: number; size?: number }) 
 export default function SoundAnalysisPage() {
   const [analyzed, setAnalyzed] = useState(true);
   const [dragging, setDragging] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [recentAnalyses, setRecentAnalyses] = useState(previouslyAnalyzed);
+  const [audioFeatures, setAudioFeatures] = useState<AudioFeatures | null>(null);
+  const [analyzingFile, setAnalyzingFile] = useState(false);
+  const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [analysisData, setAnalysisData] = useState<{
     audioDNA: typeof audioDNA;
     genreTags: typeof genreTags;
@@ -154,11 +164,50 @@ export default function SoundAnalysisPage() {
     similarTracks: typeof similarTracks;
   } | null>(null);
 
+  useEffect(() => {
+    setLoading(true);
+    apiGet<{ analyses: typeof previouslyAnalyzed }>("/api/sound-analysis")
+      .then((d) => {
+        if (d.analyses && d.analyses.length > 0) setRecentAnalyses(d.analyses);
+      })
+      .catch(() => {/* keep mock data */})
+      .finally(() => setLoading(false));
+  }, []);
+
+  const handleFileSelect = async (file: File) => {
+    setAnalyzingFile(true);
+    setUploadedFileName(file.name);
+    try {
+      const features = await analyzeAudioFile(file);
+      setAudioFeatures(features);
+    } catch (err) {
+      console.error("Audio analysis failed:", err);
+      setAudioFeatures(null);
+    } finally {
+      setAnalyzingFile(false);
+    }
+    // Also trigger the AI analysis
+    const trackName = file.name.replace(/\.[^.]+$/, "").replace(/[-_]/g, " ");
+    handleUploadAndAnalyze(trackName);
+  };
+
+  const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) handleFileSelect(file);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) handleFileSelect(file);
+  };
+
   const handleUploadAndAnalyze = async (trackTitle: string, metadata: Record<string, unknown> = {}) => {
     try {
-      const result = await apiPost<typeof analysisData>("/api/ai/generate", {
-        type: "sound-analysis",
-        context: { trackTitle, metadata },
+      const result = await apiPost<typeof analysisData>("/api/sound-analysis", {
+        trackTitle,
+        metadata,
       });
       if (result) setAnalysisData(result);
       setAnalyzed(true);
@@ -198,23 +247,41 @@ export default function SoundAnalysisPage() {
         </div>
 
         <div className="p-8 space-y-6">
+          {loading && (
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-spin w-8 h-8 border-4 border-[var(--primary)] border-t-transparent rounded-full" />
+            </div>
+          )}
           {/* ── upload zone (shown when not yet analyzed) ── */}
           {!analyzed && (
             <div
               onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
               onDragLeave={() => setDragging(false)}
-              onDrop={(e) => { e.preventDefault(); setDragging(false); handleUploadAndAnalyze("Golden Hour"); }}
+              onDrop={handleDrop}
               className={`border-2 border-dashed rounded-2xl p-16 flex flex-col items-center justify-center text-center transition-colors ${
                 dragging ? "border-[var(--primary)] bg-purple-50" : "border-gray-200 bg-white"
               }`}
             >
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="audio/*,.mp3,.wav,.flac,.ogg,.aac"
+                onChange={handleFileInput}
+                className="hidden"
+              />
               <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
                 <FileAudio size={28} className="text-gray-400" />
               </div>
               <p className="text-lg font-semibold text-gray-700 mb-1">Drag & drop your audio file here</p>
               <p className="text-sm text-gray-400 mb-4">Supports MP3, WAV, FLAC up to 50 MB</p>
+              {analyzingFile && (
+                <div className="flex items-center gap-2 text-sm text-[var(--primary)] mb-4">
+                  <div className="animate-spin w-4 h-4 border-2 border-[var(--primary)] border-t-transparent rounded-full" />
+                  Analyzing {uploadedFileName}...
+                </div>
+              )}
               <button
-                onClick={() => handleUploadAndAnalyze("Golden Hour")}
+                onClick={() => fileInputRef.current?.click()}
                 className="bg-[var(--primary)] text-white px-6 py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 transition"
               >
                 Browse Files
@@ -225,6 +292,78 @@ export default function SoundAnalysisPage() {
           {/* ── analysis results ── */}
           {analyzed && (
             <>
+              {/* 0 ── Real Audio Analysis Results */}
+              {audioFeatures && (
+                <div className="bg-white rounded-2xl border border-gray-100 p-6">
+                  <h2 className="font-bold text-lg mb-4 flex items-center gap-2">
+                    <Zap size={20} className="text-[var(--primary)]" /> Audio File Analysis
+                    {uploadedFileName && (
+                      <span className="text-sm font-normal text-gray-400 ml-2">({uploadedFileName})</span>
+                    )}
+                  </h2>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="bg-gray-50 rounded-xl p-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Clock size={16} className="text-blue-500" />
+                        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Duration</span>
+                      </div>
+                      <p className="text-xl font-bold">
+                        {Math.floor(audioFeatures.duration / 60)}:{String(Math.floor(audioFeatures.duration % 60)).padStart(2, "0")}
+                      </p>
+                    </div>
+                    <div className="bg-gray-50 rounded-xl p-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Activity size={16} className="text-rose-500" />
+                        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Est. BPM</span>
+                      </div>
+                      <p className="text-xl font-bold">{audioFeatures.estimatedBPM}</p>
+                    </div>
+                    <div className="bg-gray-50 rounded-xl p-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Volume2 size={16} className="text-orange-500" />
+                        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Peak Amp</span>
+                      </div>
+                      <p className="text-xl font-bold">{audioFeatures.peakAmplitude.toFixed(3)}</p>
+                    </div>
+                    <div className="bg-gray-50 rounded-xl p-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Gauge size={16} className="text-amber-500" />
+                        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Dynamic Range</span>
+                      </div>
+                      <p className="text-xl font-bold">{audioFeatures.dynamicRange.toFixed(1)} <span className="text-sm font-normal text-gray-400">dB</span></p>
+                    </div>
+                    <div className="bg-gray-50 rounded-xl p-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Radio size={16} className="text-violet-500" />
+                        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Sample Rate</span>
+                      </div>
+                      <p className="text-xl font-bold">{(audioFeatures.sampleRate / 1000).toFixed(1)} <span className="text-sm font-normal text-gray-400">kHz</span></p>
+                    </div>
+                    <div className="bg-gray-50 rounded-xl p-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Hash size={16} className="text-emerald-500" />
+                        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Channels</span>
+                      </div>
+                      <p className="text-xl font-bold">{audioFeatures.numberOfChannels === 2 ? "Stereo" : audioFeatures.numberOfChannels === 1 ? "Mono" : audioFeatures.numberOfChannels + "ch"}</p>
+                    </div>
+                    <div className="bg-gray-50 rounded-xl p-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Waves size={16} className="text-sky-500" />
+                        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">RMS Level</span>
+                      </div>
+                      <p className="text-xl font-bold">{(20 * Math.log10(audioFeatures.rmsLevel || 0.0001)).toFixed(1)} <span className="text-sm font-normal text-gray-400">dB</span></p>
+                    </div>
+                    <div className="bg-gray-50 rounded-xl p-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Sparkles size={16} className="text-pink-500" />
+                        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Spectral Center</span>
+                      </div>
+                      <p className="text-xl font-bold">{audioFeatures.spectralCentroid} <span className="text-sm font-normal text-gray-400">Hz</span></p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* 1 ── Track Overview */}
               <div className="bg-white rounded-2xl border border-gray-100 p-6">
                 <h2 className="font-bold text-lg mb-4 flex items-center gap-2">
@@ -432,7 +571,7 @@ export default function SoundAnalysisPage() {
                   <BarChart3 size={20} className="text-[var(--primary)]" /> Previously Analyzed
                 </h2>
                 <div className="space-y-3">
-                  {previouslyAnalyzed.map((t) => (
+                  {recentAnalyses.map((t) => (
                     <div key={t.title} className="flex items-center justify-between py-3 border-b border-gray-50 last:border-0">
                       <div className="flex items-center gap-4">
                         <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center">

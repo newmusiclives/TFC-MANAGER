@@ -1,7 +1,7 @@
 // ---------------------------------------------------------------------------
 // TrueFans CONNECT Integration Service
 // ---------------------------------------------------------------------------
-// Bridges TrueFans Manager with the TrueFans CONNECT platform
+// Bridges TrueFans MANAGER with the TrueFans CONNECT platform
 // (https://truefansconnect.com). CONNECT handles geolocation-based show
 // discovery, real-time fan donations (via Manifest Financials), "Know Your
 // Fan" CRM, SMS/email comms, fan rewards/points, artist profiles, show pages,

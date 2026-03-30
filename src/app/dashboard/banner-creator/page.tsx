@@ -17,8 +17,11 @@ import {
   Copy,
   CheckCircle2,
   Music2,
+  Code,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
+import { apiGet, apiPost } from "@/lib/api-client";
+import { generateBannerHTML, getBannerDimensions } from "@/lib/services/banner-service";
 
 type BannerSize = "instagram-post" | "instagram-story" | "facebook-cover" | "youtube-thumb" | "twitter-header" | "spotify-canvas";
 
@@ -54,9 +57,56 @@ export default function BannerCreatorPage() {
   const [subtitle, setSubtitle] = useState("New Single Out Now");
   const [artistName, setArtistName] = useState("Jordan Davis");
   const [tab, setTab] = useState<"create" | "saved">("create");
+  const [savedBannersList, setSavedBannersList] = useState(savedBanners);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    apiGet<{ banners: typeof savedBanners }>("/api/banners")
+      .then((d) => {
+        if (d.banners && d.banners.length > 0) setSavedBannersList(d.banners);
+      })
+      .catch(() => {/* keep mock data */})
+      .finally(() => setLoading(false));
+  }, []);
+
+  const saveBanner = async () => {
+    try {
+      const result = await apiPost<{ banner: typeof savedBanners[0] }>("/api/banners", {
+        name: `${title} - ${bannerSizes.find(s => s.id === selectedSize)?.label}`,
+        size: bannerSizes.find(s => s.id === selectedSize)?.label,
+        template: templates.find(t => t.id === selectedTemplate)?.name,
+        title,
+        subtitle,
+        artistName,
+      });
+      if (result.banner) setSavedBannersList(prev => [result.banner, ...prev]);
+    } catch {
+      /* save failed silently */
+    }
+  };
 
   const currentSize = bannerSizes.find((s) => s.id === selectedSize)!;
   const currentTemplate = templates.find((t) => t.id === selectedTemplate)!;
+
+  const bannerHTML = useMemo(
+    () =>
+      generateBannerHTML({
+        template: currentTemplate.name,
+        title,
+        subtitle,
+        platform: selectedSize,
+        colorScheme: currentTemplate.name,
+        artistName,
+      }),
+    [title, subtitle, selectedSize, currentTemplate.name, artistName]
+  );
+
+  const bannerDims = useMemo(
+    () => getBannerDimensions(selectedSize),
+    [selectedSize]
+  );
+
+  const [showHTMLPreview, setShowHTMLPreview] = useState(false);
 
   return (
     <div className="flex min-h-screen bg-gray-50">
@@ -81,7 +131,7 @@ export default function BannerCreatorPage() {
                 onClick={() => setTab("saved")}
                 className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${tab === "saved" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500"}`}
               >
-                Saved ({savedBanners.length})
+                Saved ({savedBannersList.length})
               </button>
             </div>
             <button className="relative p-2 text-gray-500 hover:text-gray-700">
@@ -91,6 +141,11 @@ export default function BannerCreatorPage() {
         </div>
 
         <div className="p-8">
+          {loading && (
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-spin w-8 h-8 border-4 border-[var(--primary)] border-t-transparent rounded-full" />
+            </div>
+          )}
           {tab === "create" ? (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Controls */}
@@ -194,7 +249,7 @@ export default function BannerCreatorPage() {
                   <div className="flex items-center justify-between mb-6">
                     <h2 className="font-bold text-lg">Preview</h2>
                     <div className="flex gap-2">
-                      <button className="inline-flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium text-sm px-4 py-2 rounded-lg transition-colors">
+                      <button onClick={saveBanner} className="inline-flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium text-sm px-4 py-2 rounded-lg transition-colors">
                         <Copy size={14} /> Save
                       </button>
                       <button className="inline-flex items-center gap-2 bg-[var(--primary)] hover:bg-[var(--primary-dark)] text-white font-medium text-sm px-4 py-2 rounded-lg transition-colors">
@@ -226,13 +281,39 @@ export default function BannerCreatorPage() {
                   <p className="text-xs text-gray-400 text-center mt-3">
                     {currentSize.label} &bull; {currentSize.dims}px
                   </p>
+
+                  {/* HTML Preview Toggle */}
+                  <div className="mt-6 border-t border-gray-100 pt-4">
+                    <button
+                      onClick={() => setShowHTMLPreview(!showHTMLPreview)}
+                      className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 transition-colors"
+                    >
+                      <Code size={14} />
+                      {showHTMLPreview ? "Hide" : "Show"} Export-Ready Preview
+                    </button>
+                    {showHTMLPreview && (
+                      <div className="mt-4 flex items-center justify-center bg-gray-50 rounded-xl p-4">
+                        <iframe
+                          srcDoc={bannerHTML}
+                          title="Banner Preview"
+                          style={{
+                            width: Math.min(bannerDims.width, 480),
+                            height: Math.min(bannerDims.height, 480) * (Math.min(bannerDims.width, 480) / bannerDims.width),
+                            border: "none",
+                            borderRadius: "8px",
+                          }}
+                          sandbox="allow-same-origin"
+                        />
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
           ) : (
             /* Saved banners */
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-              {savedBanners.map((b) => (
+              {savedBannersList.map((b) => (
                 <div key={b.id} className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
                   <div className={`h-40 bg-gradient-to-br ${templates.find((t) => t.name === b.template)?.colors || "from-gray-400 to-gray-600"} flex items-center justify-center`}>
                     <div className="text-center text-white">

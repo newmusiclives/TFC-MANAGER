@@ -3,7 +3,8 @@
 import DashboardSidebar from "@/components/DashboardSidebar";
 import { Bell, DollarSign, Plus, FileText, Users, CheckCircle2, Clock, AlertCircle, Download, Music2, ArrowRight } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { apiGet, apiPost } from "@/lib/api-client";
 
 const COLORS = ["#00c878", "#7c3aed", "#ef4444", "#f59e0b", "#3b82f6"];
 
@@ -56,9 +57,20 @@ export default function RevenueSplitsPage() {
     { name: "", role: "", split: 50 },
     { name: "", role: "", split: 50 },
   ]);
+  const [splitsData, setSplitsData] = useState(splits);
+  const [loading, setLoading] = useState(true);
 
-  const totalEarned = splits.reduce((a, s) => a + s.totalRevenue, 0);
-  const totalPending = splits.reduce((a, s) => a + s.pending, 0);
+  useEffect(() => {
+    apiGet<{ splits: typeof splits }>("/api/revenue-splits")
+      .then((d) => {
+        if (d.splits && d.splits.length > 0) setSplitsData(d.splits);
+      })
+      .catch(() => {/* keep mock data */})
+      .finally(() => setLoading(false));
+  }, []);
+
+  const totalEarned = splitsData.reduce((a, s) => a + s.totalRevenue, 0);
+  const totalPending = splitsData.reduce((a, s) => a + s.pending, 0);
 
   return (
     <div className="flex min-h-screen bg-gray-50">
@@ -99,9 +111,15 @@ export default function RevenueSplitsPage() {
                 <div className="w-9 h-9 bg-blue-50 rounded-lg flex items-center justify-center"><FileText size={18} className="text-blue-600" /></div>
                 <span className="text-sm text-gray-500">Active Splits</span>
               </div>
-              <div className="text-2xl font-bold">{splits.length}</div>
+              <div className="text-2xl font-bold">{splitsData.length}</div>
             </div>
           </div>
+
+          {loading && (
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-spin w-8 h-8 border-4 border-[var(--primary)] border-t-transparent rounded-full" />
+            </div>
+          )}
 
           {showCreate && (
             <div className="bg-white rounded-2xl border border-gray-100 p-6 mb-6">
@@ -147,7 +165,7 @@ export default function RevenueSplitsPage() {
 
           {/* Splits */}
           <div className="space-y-4">
-            {splits.map((split) => (
+            {splitsData.map((split) => (
               <div key={split.id} className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
                 <div className="p-6 cursor-pointer hover:bg-gray-50/50 transition-colors" onClick={() => setExpandedSplit(expandedSplit === split.id ? null : split.id)}>
                   <div className="flex items-center justify-between">

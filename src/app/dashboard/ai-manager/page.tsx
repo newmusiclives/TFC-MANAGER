@@ -2,7 +2,8 @@
 
 import DashboardSidebar from "@/components/DashboardSidebar";
 import { apiPost } from "@/lib/api-client";
-import { Send, Bot, User, Sparkles, RotateCcw, Lightbulb, TrendingUp, Music2, Megaphone, Clock } from "lucide-react";
+import { Send, Bot, User, Sparkles, RotateCcw, Lightbulb, TrendingUp, Music2, Megaphone, Clock, Zap, ArrowRight } from "lucide-react";
+import Link from "next/link";
 import { useState, useRef, useEffect } from "react";
 
 type Message = { role: "user" | "ai"; content: string; timestamp: string };
@@ -194,6 +195,23 @@ What would you like to work on today?`,
           >
             <RotateCcw size={14} /> Clear chat
           </button>
+        </div>
+
+        {/* Autopilot Banner */}
+        <div className="px-8 pt-4">
+          <Link
+            href="/dashboard/ai-autopilot"
+            className="flex items-center gap-3 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-100 rounded-xl px-4 py-3 hover:shadow-sm transition-shadow group"
+          >
+            <div className="w-8 h-8 bg-gradient-to-br from-amber-500 to-orange-600 rounded-lg flex items-center justify-center shrink-0">
+              <Zap size={16} className="text-white" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-gray-900">Your AI Manager can now take actions for you</p>
+              <p className="text-xs text-gray-500">View the Action Queue to approve AI-suggested tasks</p>
+            </div>
+            <ArrowRight size={16} className="text-amber-600 group-hover:translate-x-0.5 transition-transform" />
+          </Link>
         </div>
 
         {/* Messages */}

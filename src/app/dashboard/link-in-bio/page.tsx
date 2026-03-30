@@ -29,7 +29,8 @@ import {
   Check,
   Copy,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { apiGet, apiPost } from "@/lib/api-client";
 
 interface LinkBlock {
   id: string;
@@ -77,6 +78,35 @@ export default function LinkInBioPage() {
   const [fontStyle, setFontStyle] = useState<"modern" | "classic" | "rounded">("modern");
   const [showAnalytics, setShowAnalytics] = useState(true);
   const [copied, setCopied] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    apiGet<{
+      profileName: string; bio: string; theme: "dark" | "light" | "gradient";
+      accentColor: string; fontStyle: "modern" | "classic" | "rounded";
+      links: LinkBlock[];
+    }>("/api/link-in-bio")
+      .then((d) => {
+        if (d.profileName) setProfileName(d.profileName);
+        if (d.bio) setBio(d.bio);
+        if (d.theme) setTheme(d.theme);
+        if (d.accentColor) setAccentColor(d.accentColor);
+        if (d.fontStyle) setFontStyle(d.fontStyle);
+        if (d.links) setLinks(d.links);
+      })
+      .catch(() => {/* keep mock data */})
+      .finally(() => setLoading(false));
+  }, []);
+
+  const saveConfig = async () => {
+    try {
+      await apiPost("/api/link-in-bio", {
+        profileName, bio, theme, accentColor, fontStyle, links,
+      });
+    } catch {
+      /* save failed silently */
+    }
+  };
 
   const copyUrl = () => {
     setCopied(true);
@@ -145,7 +175,10 @@ export default function LinkInBioPage() {
                 <Copy size={14} className="text-gray-400" />
               )}
             </div>
-            <button className="flex items-center gap-2 bg-gray-900 text-white text-sm px-5 py-2.5 rounded-lg hover:bg-gray-800 transition-colors font-medium">
+            <button
+              onClick={saveConfig}
+              className="flex items-center gap-2 bg-gray-900 text-white text-sm px-5 py-2.5 rounded-lg hover:bg-gray-800 transition-colors font-medium"
+            >
               Publish
               <ExternalLink size={14} />
             </button>
@@ -153,6 +186,11 @@ export default function LinkInBioPage() {
         </div>
 
         <div className="p-8">
+          {loading && (
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-spin w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full" />
+            </div>
+          )}
           <div className="flex gap-8">
             {/* Editor Column */}
             <div className="flex-1 min-w-0 space-y-6">

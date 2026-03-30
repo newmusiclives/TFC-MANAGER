@@ -21,7 +21,7 @@ import {
   Image as ImageIcon,
 } from "lucide-react";
 
-const TOTAL_STEPS = 4;
+const TOTAL_STEPS = 5;
 
 const genres = [
   "Pop",
@@ -123,6 +123,8 @@ export default function OnboardingPage() {
         return true;
       case 4:
         return true;
+      case 5:
+        return true;
       default:
         return false;
     }
@@ -167,7 +169,7 @@ export default function OnboardingPage() {
                   <Sparkles size={28} className="text-[var(--primary)]" />
                 </div>
                 <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                  Welcome to TrueFans Manager
+                  Welcome to TrueFans MANAGER
                 </h1>
                 <p className="text-gray-500 text-lg">
                   Let&apos;s set up your artist profile in a few quick steps.
@@ -490,6 +492,134 @@ export default function OnboardingPage() {
             </div>
           )}
 
+          {/* ===== Step 5: Your First 30 Days ===== */}
+          {step === 5 && (
+            <div className="animate-in fade-in">
+              <div className="text-center mb-8">
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-[var(--primary)]/10 mb-4">
+                  <Rocket size={28} className="text-[var(--primary)]" />
+                </div>
+                <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                  Your Personalized Launch Plan
+                </h1>
+                <p className="text-gray-500 text-lg">
+                  Here&apos;s your AI-generated 30-day plan based on your profile.
+                </p>
+              </div>
+
+              <div className="space-y-6">
+                {/* Week 1 */}
+                <div className="bg-white rounded-2xl border border-gray-100 p-6">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-sm">
+                      W1
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-gray-900">Week 1: Setup</h3>
+                      <p className="text-xs text-gray-400">Foundation &amp; connections</p>
+                    </div>
+                  </div>
+                  <div className="space-y-2.5">
+                    {[
+                      "Complete your artist profile with bio, photos, and links",
+                      "Connect all streaming platforms (Spotify, Apple Music, YouTube)",
+                      "Upload your first release or import an existing one",
+                    ].map((task, i) => (
+                      <div key={i} className="flex items-start gap-3 pl-2">
+                        <div className="w-5 h-5 rounded-full border-2 border-gray-200 flex items-center justify-center shrink-0 mt-0.5">
+                          <span className="text-[10px] text-gray-400">{i + 1}</span>
+                        </div>
+                        <p className="text-sm text-gray-600">{task}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Week 2 */}
+                <div className="bg-white rounded-2xl border border-gray-100 p-6">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center text-purple-600 font-bold text-sm">
+                      W2
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-gray-900">Week 2: Content</h3>
+                      <p className="text-xs text-gray-400">Create &amp; schedule</p>
+                    </div>
+                  </div>
+                  <div className="space-y-2.5">
+                    {[
+                      "Generate promotional content with AI Content Generator",
+                      "Schedule your first social media posts",
+                      "Create smart links for your releases",
+                      "Set up your link-in-bio page",
+                    ].map((task, i) => (
+                      <div key={i} className="flex items-start gap-3 pl-2">
+                        <div className="w-5 h-5 rounded-full border-2 border-gray-200 flex items-center justify-center shrink-0 mt-0.5">
+                          <span className="text-[10px] text-gray-400">{i + 1}</span>
+                        </div>
+                        <p className="text-sm text-gray-600">{task}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Week 3 */}
+                <div className="bg-white rounded-2xl border border-gray-100 p-6">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-600 font-bold text-sm">
+                      W3
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-gray-900">Week 3: Growth</h3>
+                      <p className="text-xs text-gray-400">Expand your reach</p>
+                    </div>
+                  </div>
+                  <div className="space-y-2.5">
+                    {[
+                      "Pitch your tracks to curated playlists",
+                      "Launch your Fan CRM and import contacts",
+                      "Share listening links with your network",
+                    ].map((task, i) => (
+                      <div key={i} className="flex items-start gap-3 pl-2">
+                        <div className="w-5 h-5 rounded-full border-2 border-gray-200 flex items-center justify-center shrink-0 mt-0.5">
+                          <span className="text-[10px] text-gray-400">{i + 1}</span>
+                        </div>
+                        <p className="text-sm text-gray-600">{task}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Week 4 */}
+                <div className="bg-white rounded-2xl border border-gray-100 p-6">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center text-amber-600 font-bold text-sm">
+                      W4
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-gray-900">Week 4: Analyze</h3>
+                      <p className="text-xs text-gray-400">Review &amp; plan ahead</p>
+                    </div>
+                  </div>
+                  <div className="space-y-2.5">
+                    {[
+                      "Review your analytics and streaming performance",
+                      "Get your first AI Manager check-in and recommendations",
+                      "Plan your next release with AI-powered insights",
+                    ].map((task, i) => (
+                      <div key={i} className="flex items-start gap-3 pl-2">
+                        <div className="w-5 h-5 rounded-full border-2 border-gray-200 flex items-center justify-center shrink-0 mt-0.5">
+                          <span className="text-[10px] text-gray-400">{i + 1}</span>
+                        </div>
+                        <p className="text-sm text-gray-600">{task}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Navigation */}
           <div className="mt-8 flex items-center justify-between">
             {step > 1 ? (
@@ -524,7 +654,7 @@ export default function OnboardingPage() {
                 className="flex items-center gap-2 px-6 py-2.5 text-sm font-semibold rounded-xl bg-[var(--primary)] text-white hover:opacity-90 transition-all disabled:opacity-60"
               >
                 <Rocket size={16} />
-                {launching ? "Saving..." : "Launch Dashboard"}
+                {launching ? "Saving..." : "Start My Journey"}
               </button>
             )}
           </div>

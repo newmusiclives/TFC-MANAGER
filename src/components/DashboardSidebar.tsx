@@ -12,6 +12,7 @@ import {
   Sparkles,
   Image,
   Lock,
+  ListMusic,
   FileSearch,
   Settings,
   LogOut,
@@ -40,6 +41,15 @@ import {
   Search,
   Lightbulb,
   Target,
+  Zap,
+  Dna,
+  RotateCcw,
+  Scale,
+  LineChart,
+  Receipt,
+  Newspaper,
+  TrendingUp,
+  Disc,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -54,11 +64,13 @@ const navSections: NavSection[] = [
     items: [
       { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
       { label: "AI Manager", href: "/dashboard/ai-manager", icon: MessageCircle, badge: "AI" },
+      { label: "AI Autopilot", href: "/dashboard/ai-autopilot", icon: Zap, badge: "AI" },
       { label: "Weekly Report", href: "/dashboard/weekly-report", icon: FileBarChart, badge: "AI" },
       { label: "Artist Profile", href: "/artist", icon: Music2 },
       { label: "Calendar", href: "/dashboard/calendar", icon: CalendarDays },
       { label: "Notifications", href: "/dashboard/notifications", icon: Bell },
       { label: "Quick Capture", href: "/dashboard/quick-capture", icon: Lightbulb },
+      { label: "Team", href: "/dashboard/team", icon: Users },
     ],
   },
   {
@@ -69,6 +81,8 @@ const navSections: NavSection[] = [
       { label: "Release Kit", href: "/dashboard/release-kit", icon: Package },
       { label: "Distribution", href: "/dashboard/distribution", icon: Truck },
       { label: "Smart Links", href: "/dashboard/smart-links", icon: Link2 },
+      { label: "Playlist Pitching", href: "/dashboard/playlist-pitching", icon: ListMusic, badge: "AI" },
+      { label: "Sync Licensing", href: "/dashboard/sync-licensing", icon: Disc },
       { label: "Listening Links", href: "/dashboard/listening-links", icon: Lock },
     ],
   },
@@ -81,6 +95,7 @@ const navSections: NavSection[] = [
       { label: "Video Storyboard", href: "/dashboard/storyboard", icon: Film, badge: "AI" },
       { label: "Website / EPK", href: "/dashboard/website", icon: Globe },
       { label: "Link-in-Bio", href: "/dashboard/link-in-bio", icon: LinkIcon },
+      { label: "Press Outreach", href: "/dashboard/press-outreach", icon: Newspaper, badge: "AI" },
     ],
   },
   {
@@ -90,8 +105,13 @@ const navSections: NavSection[] = [
       { label: "Sound Analysis", href: "/dashboard/sound-analysis", icon: AudioWaveform, badge: "AI" },
       { label: "Fan Heatmap", href: "/dashboard/fan-heatmap", icon: MapPin },
       { label: "Career Path", href: "/dashboard/career-path", icon: Trophy },
+      { label: "Career DNA", href: "/dashboard/career-dna", icon: Dna, badge: "AI" },
       { label: "Trends Radar", href: "/dashboard/trends-radar", icon: Radar },
       { label: "Competitive Intel", href: "/dashboard/competitive-intel", icon: Target, badge: "AI" },
+      { label: "Audience Growth", href: "/dashboard/audience-growth", icon: TrendingUp, badge: "AI" },
+      { label: "SEO & AIEO", href: "/dashboard/seo-aieo", icon: Search, badge: "AI" },
+      { label: "Opportunity Radar", href: "/dashboard/opportunity-radar", icon: Search, badge: "AI" },
+      { label: "Revenue Forecast", href: "/dashboard/revenue-forecast", icon: LineChart, badge: "AI" },
     ],
   },
   {
@@ -103,7 +123,13 @@ const navSections: NavSection[] = [
       { label: "Revenue Splits", href: "/dashboard/revenue-splits", icon: DollarSign },
       { label: "Collab Rooms", href: "/dashboard/collab-rooms", icon: Users },
       { label: "Gigs & Shows", href: "/dashboard/gigs", icon: Mic2 },
+      { label: "Live Hub", href: "/dashboard/live-hub", icon: Mic2 },
+      { label: "Collab Marketplace", href: "/dashboard/collab-marketplace", icon: Users },
+      { label: "Royalty Tracker", href: "/dashboard/royalty-tracker", icon: Receipt },
       { label: "Contract Analysis", href: "/dashboard/contracts", icon: FileSearch, badge: "AI" },
+      { label: "Smart Negotiator", href: "/dashboard/smart-negotiator", icon: Scale, badge: "AI" },
+      { label: "Fan Value Score", href: "/dashboard/fan-value", icon: DollarSign },
+      { label: "Release Replay", href: "/dashboard/release-replay", icon: RotateCcw, badge: "AI" },
     ],
   },
 ];
@@ -125,7 +151,7 @@ export default function DashboardSidebar() {
               <span className="text-white font-bold text-xs">TF</span>
             </div>
             <span className="font-bold text-base tracking-tight">
-              TrueFans<span className="text-[var(--primary)]"> Manager</span>
+              TrueFans<span className="text-[var(--primary)]"> MANAGER</span>
             </span>
           </Link>
         )}
