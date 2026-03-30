@@ -3,6 +3,7 @@
 // Run with: npx tsx prisma/seed.ts
 // ---------------------------------------------------------------------------
 
+import "dotenv/config";
 import { PrismaClient } from "../src/generated/prisma/client";
 import bcrypt from "bcryptjs";
 

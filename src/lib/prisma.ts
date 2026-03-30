@@ -1,4 +1,5 @@
 import { PrismaClient } from "../generated/prisma/client";
+import { PrismaPg } from "@prisma/adapter-pg";
 
 const globalForPrisma = globalThis as unknown as {
   prisma: InstanceType<typeof PrismaClient> | undefined;
@@ -6,7 +7,7 @@ const globalForPrisma = globalThis as unknown as {
 
 function createPrismaClient() {
   const url = process.env.DATABASE_URL;
-  if (!url || url.includes("password@localhost")) {
+  if (!url) {
     // Return a nested proxy that mimics prisma.model.method() calls
     const modelProxy = new Proxy({}, {
       get(_target, method) {
@@ -24,13 +25,13 @@ function createPrismaClient() {
         if (prop === "then" || prop === "$connect" || prop === "$disconnect") {
           return undefined;
         }
-        // Return a model-level proxy so prisma.user.findUnique() works
         return modelProxy;
       },
     });
   }
-  // @ts-expect-error -- Prisma 7 constructor signature varies
-  return new PrismaClient({ datasourceUrl: url });
+
+  const adapter = new PrismaPg(url);
+  return new PrismaClient({ adapter });
 }
 
 export const prisma = globalForPrisma.prisma ?? createPrismaClient();

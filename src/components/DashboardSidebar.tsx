@@ -18,6 +18,7 @@ import {
   LogOut,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   MessageCircle,
   MapPin,
   FlaskConical,
@@ -51,16 +52,18 @@ import {
   TrendingUp,
   Disc,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 type NavSection = {
   title: string;
+  icon: React.ElementType;
   items: { label: string; href: string; icon: React.ElementType; badge?: string }[];
 };
 
 const navSections: NavSection[] = [
   {
     title: "Core",
+    icon: LayoutDashboard,
     items: [
       { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
       { label: "AI Manager", href: "/dashboard/ai-manager", icon: MessageCircle, badge: "AI" },
@@ -75,6 +78,7 @@ const navSections: NavSection[] = [
   },
   {
     title: "Release Tools",
+    icon: Music2,
     items: [
       { label: "Release Plans", href: "/dashboard/release-plans", icon: FileText },
       { label: "Release Simulator", href: "/dashboard/release-simulator", icon: FlaskConical, badge: "AI" },
@@ -88,6 +92,7 @@ const navSections: NavSection[] = [
   },
   {
     title: "Create",
+    icon: Sparkles,
     items: [
       { label: "Content Generator", href: "/dashboard/content-generator", icon: Sparkles, badge: "AI" },
       { label: "Social Scheduler", href: "/dashboard/social-scheduler", icon: Share2 },
@@ -100,6 +105,7 @@ const navSections: NavSection[] = [
   },
   {
     title: "Intelligence",
+    icon: BarChart3,
     items: [
       { label: "Analytics", href: "/dashboard/analytics", icon: BarChart3 },
       { label: "Sound Analysis", href: "/dashboard/sound-analysis", icon: AudioWaveform, badge: "AI" },
@@ -116,6 +122,7 @@ const navSections: NavSection[] = [
   },
   {
     title: "Business",
+    icon: Wallet,
     items: [
       { label: "Earnings", href: "/dashboard/earnings", icon: Wallet },
       { label: "Fan CRM", href: "/dashboard/fan-crm", icon: Mail },
@@ -134,9 +141,27 @@ const navSections: NavSection[] = [
   },
 ];
 
+function sectionHasActiveItem(section: NavSection, pathname: string) {
+  return section.items.some((item) => pathname === item.href);
+}
+
 export default function DashboardSidebar() {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
+
+  // Auto-expand the section containing the active page
+  useEffect(() => {
+    const activeSection = navSections.find((s) => sectionHasActiveItem(s, pathname));
+    if (activeSection && !openSections[activeSection.title]) {
+      setOpenSections((prev) => ({ ...prev, [activeSection.title]: true }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname]);
+
+  const toggleSection = (title: string) => {
+    setOpenSections((prev) => ({ ...prev, [title]: !prev[title] }));
+  };
 
   return (
     <aside
@@ -144,6 +169,7 @@ export default function DashboardSidebar() {
         collapsed ? "w-[72px]" : "w-64"
       }`}
     >
+      {/* Header */}
       <div className="flex items-center justify-between h-14 px-4 border-b border-gray-800">
         {!collapsed && (
           <Link href="/" className="flex items-center gap-2">
@@ -162,6 +188,7 @@ export default function DashboardSidebar() {
         )}
       </div>
 
+      {/* Collapse toggle */}
       <button
         onClick={() => setCollapsed(!collapsed)}
         className="absolute -right-3 top-18 w-6 h-6 bg-gray-800 hover:bg-gray-700 rounded-full flex items-center justify-center text-gray-400 transition-colors"
@@ -169,54 +196,85 @@ export default function DashboardSidebar() {
         {collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
       </button>
 
-      <nav className="flex-1 py-1 px-2 overflow-y-auto">
-        {navSections.map((section) => (
-          <div key={section.title} className="mb-2">
-            {!collapsed && (
-              <div className="px-3 py-1 text-xs font-bold uppercase tracking-widest text-gray-600">
-                {section.title}
-              </div>
-            )}
-            {collapsed && <div className="border-t border-gray-800 my-1.5" />}
-            <div className="space-y-px">
-              {section.items.map((item) => {
-                const isActive = pathname === item.href;
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className={`flex items-center gap-2.5 px-2.5 py-[7px] rounded-lg text-sm font-medium transition-colors ${
-                      isActive
-                        ? "bg-[var(--primary)] text-white"
-                        : "text-gray-400 hover:text-white hover:bg-gray-800/60"
+      {/* Navigation */}
+      <nav className="flex-1 py-2 px-2 overflow-y-auto">
+        {navSections.map((section) => {
+          const isOpen = openSections[section.title] ?? false;
+          const hasActive = sectionHasActiveItem(section, pathname);
+          const SectionIcon = section.icon;
+
+          return (
+            <div key={section.title} className="mb-1">
+              {/* Category header — clickable to expand/collapse */}
+              {!collapsed ? (
+                <button
+                  onClick={() => toggleSection(section.title)}
+                  className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-sm font-semibold transition-colors ${
+                    hasActive
+                      ? "text-[var(--primary)]"
+                      : "text-gray-400 hover:text-white hover:bg-gray-800/40"
+                  }`}
+                >
+                  <SectionIcon size={16} className="shrink-0" />
+                  <span className="flex-1 text-left">{section.title}</span>
+                  {hasActive && !isOpen && (
+                    <span className="w-1.5 h-1.5 rounded-full bg-[var(--primary)]" />
+                  )}
+                  <ChevronDown
+                    size={14}
+                    className={`shrink-0 text-gray-600 transition-transform duration-200 ${
+                      isOpen ? "rotate-0" : "-rotate-90"
                     }`}
-                    title={collapsed ? item.label : undefined}
-                  >
-                    <item.icon size={16} className="shrink-0" />
-                    {!collapsed && (
-                      <>
-                        <span className="flex-1 truncate">{item.label}</span>
-                        {item.badge && (
-                          <span
-                            className={`text-xs font-bold px-1.5 py-0.5 rounded-full leading-none ${
-                              item.badge === "AI"
-                                ? "bg-purple-500/20 text-purple-300"
-                                : "bg-[var(--primary)]/20 text-[var(--primary)]"
-                            }`}
-                          >
-                            {item.badge}
-                          </span>
+                  />
+                </button>
+              ) : (
+                <div className="border-t border-gray-800 my-1.5" />
+              )}
+
+              {/* Items — collapsible in expanded mode, always shown in collapsed mode */}
+              {(collapsed || isOpen) && (
+                <div className={`space-y-px ${!collapsed ? "ml-2 pl-2 border-l border-gray-800/60" : ""}`}>
+                  {section.items.map((item) => {
+                    const isActive = pathname === item.href;
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        className={`flex items-center gap-2.5 px-2.5 py-[6px] rounded-lg text-[13px] font-medium transition-colors ${
+                          isActive
+                            ? "bg-[var(--primary)] text-white"
+                            : "text-gray-400 hover:text-white hover:bg-gray-800/60"
+                        }`}
+                        title={collapsed ? item.label : undefined}
+                      >
+                        <item.icon size={15} className="shrink-0" />
+                        {!collapsed && (
+                          <>
+                            <span className="flex-1 truncate">{item.label}</span>
+                            {item.badge && (
+                              <span
+                                className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none ${
+                                  item.badge === "AI"
+                                    ? "bg-purple-500/20 text-purple-300"
+                                    : "bg-[var(--primary)]/20 text-[var(--primary)]"
+                                }`}
+                              >
+                                {item.badge}
+                              </span>
+                            )}
+                          </>
                         )}
-                      </>
-                    )}
-                  </Link>
-                );
-              })}
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
             </div>
-          </div>
-        ))}
+          );
+        })}
       </nav>
 
+      {/* Footer */}
       <div className="border-t border-gray-800 p-2 space-y-px">
         <Link
           href="/dashboard/settings"
